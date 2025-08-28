@@ -78,7 +78,7 @@ exports.analyzePrivacyPolicy = async (req, res) => {
     }
 
     // Check text length to prevent abuse
-    if (policyText.length > 100000) { // 100KB limit
+    if (policyText.length > 300000) { // 300KB limit (increased for large privacy policies)
       return res.status(400).json({
         error: 'Text too long',
         message: 'Privacy policy text exceeds maximum length limit'
