@@ -289,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </ul>
             </div>
             <div style="margin-top: 10px; font-size: 12px; color: #6c757d; text-align: center;">
-                Analyzed: <a href="${escapeHtml(policyUrl)}" target="_blank" style="color: #667eea;" title="${escapeHtml(policyUrl)}">${escapeHtml(formatUrlForDisplay(policyUrl))}</a>
+                Analyzed: <a href="${escapeHtml(policyUrl)}" target="_blank" rel="noopener noreferrer" style="color: #667eea;" title="${escapeHtml(policyUrl)}">${escapeHtml(formatUrlForDisplay(policyUrl))}</a>
             </div>
         `;
     }
@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </ul>
             </div>
             <div style="margin-top: 10px; font-size: 12px; color: #6c757d; text-align: center;">
-                Current Page: <a href="${escapeHtml(policyUrl)}" target="_blank" style="color: #667eea;" title="${escapeHtml(policyUrl)}">${escapeHtml(formatUrlForDisplay(policyUrl))}</a>
+                Current Page: <a href="${escapeHtml(policyUrl)}" target="_blank" rel="noopener noreferrer" style="color: #667eea;" title="${escapeHtml(policyUrl)}">${escapeHtml(formatUrlForDisplay(policyUrl))}</a>
             </div>
         `;
     }
