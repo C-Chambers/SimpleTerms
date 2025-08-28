@@ -134,20 +134,19 @@ See [TESTING_WORKFLOW.md](TESTING_WORKFLOW.md) for detailed testing documentatio
 - ✅ **Cloud Function Deployed**: Serverless AI backend operational
 - ✅ **CORS Enabled**: Support for automated testing
 
-## 🛣️ Roadmap
+## 🛣️ Next Steps
 
-See [ROADMAP.md](ROADMAP.md) for detailed development plans.
-
-### Next Steps (v1.1)
+### Version 1.1 (In Development)
 - [ ] Improve detection for problematic sites (target 90% pass rate)
 - [ ] Add site-specific handlers for Amazon, YouTube, Reddit
 - [ ] Implement user feedback mechanism
 - [ ] Chrome Web Store submission
 
-### Future Versions
-- **v1.2**: Premium features and monetization
-- **v1.3**: Policy change monitoring
-- **v2.0**: Cross-browser support (Firefox, Safari, Edge)
+### Future Enhancements
+- [ ] Cross-browser support (Firefox, Safari, Edge)
+- [ ] Multi-language support
+- [ ] Enhanced privacy risk analysis
+- [ ] Performance optimizations
 
 ## 🤝 Contributing
 

@@ -89,6 +89,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enterprise features
 - API access for developers
 
----
-
-*For detailed roadmap, see [ROADMAP.md](ROADMAP.md)*
