@@ -343,7 +343,7 @@
       },
       {
         "name": "Epic Games",
-        "url": "https://epicgames.com",
+        "url": "https://store.epicgames.com/en-US",
         "expectedPoints": 7,
         "timeout": 15000,
         "type": "static"

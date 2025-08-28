@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (policy.url.includes('facebook.com') || policy.url.includes('instagram.com') || 
                     policy.url.includes('twitter.com') || policy.url.includes('linkedin.com') ||
                     policy.url.includes('tiktok.com') || policy.url.includes('snapchat.com') ||
-                    policy.url.includes('notion.so')) {
+                    policy.url.includes('notion.so') || policy.url.includes('epicgames.com')) {
                     
                     console.log(`Tab ${tabIndex} - Detected dynamic content site, attempting advanced extraction...`);
                     

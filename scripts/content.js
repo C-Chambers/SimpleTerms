@@ -210,6 +210,37 @@
     }
 
     /**
+     * Recursively find all links including those in Shadow DOM
+     * @param {Document|DocumentFragment} root - The root to search from
+     * @returns {Array} Array of all link elements found
+     */
+    function findAllLinksIncludingShadowDOM(root = document) {
+        const links = [];
+        
+        try {
+            // Get regular links in this root
+            const regularLinks = root.querySelectorAll('a[href]');
+            regularLinks.forEach(link => links.push(link));
+            
+            // Find all elements that might have shadow roots
+            const allElements = root.querySelectorAll('*');
+            allElements.forEach(element => {
+                if (element.shadowRoot) {
+                    console.log('SimpleTerms: Found shadow root in:', element.tagName, element.className || 'no-class');
+                    
+                    // Recursively search inside the shadow root
+                    const shadowLinks = findAllLinksIncludingShadowDOM(element.shadowRoot);
+                    shadowLinks.forEach(link => links.push(link));
+                }
+            });
+        } catch (error) {
+            console.log('SimpleTerms: Error traversing shadow DOM:', error.message);
+        }
+        
+        return links;
+    }
+
+    /**
      * Check if a link points to non-policy content (help articles, support pages, etc.)
      * @param {string} href - The link URL
      * @param {string} text - The link text content
@@ -362,9 +393,11 @@
 
     function findPrivacyPolicyLink() {
         try {
-            // Get all anchor tags on the page
-            const links = document.querySelectorAll('a[href]');
+            // Get all anchor tags on the page (including Shadow DOM)
+            const links = findAllLinksIncludingShadowDOM();
             const candidates = [];
+            
+            console.log('SimpleTerms: Found', links.length, 'total links (including shadow DOM)');
 
             // Score each link based on how well it matches our patterns
             links.forEach(link => {
@@ -458,7 +491,7 @@
                 const topCandidates = uniqueCandidates.slice(0, 3);
                 
                 // Enhanced logging for debugging link selection
-                console.log('SimpleTerms: Found', candidates.length, 'privacy policy candidates,', uniqueCandidates.length, 'unique');
+                console.log('SimpleTerms: Found', candidates.length, 'privacy policy candidates,', uniqueCandidates.length, 'unique (including shadow DOM)');
                 console.log('SimpleTerms: Top', topCandidates.length, 'unique candidates:');
                 topCandidates.forEach((candidate, index) => {
                     console.log(`  ${index + 1}. Score: ${candidate.score}, Text: "${candidate.text}", URL: ${candidate.url}, Location: ${candidate.location}, Context: ${candidate.context}`);
@@ -475,7 +508,7 @@
                     }))
                 });
             } else {
-                console.log('SimpleTerms: No privacy policy link found');
+                console.log('SimpleTerms: No privacy policy link found (searched regular and shadow DOM)');
                 chrome.runtime.sendMessage({
                     type: 'NO_POLICY_FOUND'
                 });
