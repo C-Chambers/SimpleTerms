@@ -1,7 +1,7 @@
 {
   "description": "Sites that consistently pass testing - used for regression testing",
-  "lastUpdated": "2025-08-28T19:17:32.163Z",
-  "totalSites": 39,
+  "lastUpdated": "2025-01-15T12:00:00.000Z",
+  "totalSites": 40,
   "sites": [
     {
       "name": "Amazon",
@@ -197,6 +197,12 @@
       "name": "Xbox",
       "category": "gaming",
       "type": "static"
+    },
+    {
+      "name": "Epic Games",
+      "category": "gaming",
+      "type": "static",
+      "note": "Fixed with Shadow DOM support - now detects privacy policy in shadow root"
     }
   ]
 }

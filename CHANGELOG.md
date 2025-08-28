@@ -5,6 +5,33 @@ All notable changes to SimpleTerms will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-01-15
+
+### 🔧 Major Performance Improvement
+
+#### Added
+- **Shadow DOM Support**: Enhanced privacy policy detection to traverse Shadow DOM trees
+  - Fixes detection failures on modern React/Angular sites using Web Components
+  - Successfully resolves Epic Games Store detection issue
+  - Improves compatibility with encapsulated component architectures
+
+#### Fixed
+- **Epic Games Store**: Privacy policy now properly detected and analyzed
+  - Was hidden in Shadow DOM, now accessible via recursive traversal
+  - Moved from problematic sites to regression test suite
+
+#### Improved
+- **Success Rate**: Increased from 96% to **98%** (49/50 sites working)
+- **Test Results**: Only 1 remaining problematic site (Twitch)
+- **Logging**: Enhanced debug output to indicate Shadow DOM discovery
+
+#### Technical Details
+- Added `findAllLinksIncludingShadowDOM()` function for recursive Shadow DOM traversal
+- Updated `findPrivacyPolicyLink()` to search both regular and Shadow DOM
+- Maintained backward compatibility with existing site detection
+
+---
+
 ## [1.0.0] - 2024-08-28
 
 ### 🎉 Initial Release

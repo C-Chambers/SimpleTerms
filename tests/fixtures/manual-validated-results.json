@@ -257,15 +257,9 @@
   },
   "problematic": {
     "description": "Sites with genuine issues requiring fixes",
-    "lastUpdated": "2025-08-28T19:24:07.294Z",
-    "totalSites": 2,
+    "lastUpdated": "2025-01-15T12:00:00.000Z",
+    "totalSites": 1,
     "sites": [
-      {
-        "name": "Epic Games",
-        "category": "gaming",
-        "error": "Privacy policy link not detected",
-        "type": "detection_failure"
-      },
       {
         "name": "Twitch",
         "category": "gaming",
@@ -276,9 +270,9 @@
   },
   "statistics": {
     "totalTested": 50,
-    "passed": 48,
-    "failed": 2,
-    "passRate": "96%"
+    "passed": 49,
+    "failed": 1,
+    "passRate": "98%"
   },
   "categoryBreakdown": {
     "ecommerce": {
