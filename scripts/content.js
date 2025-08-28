@@ -547,6 +547,12 @@
      */
     function analyzePageForPrivacyPolicy() {
         try {
+            // Skip analysis if this is a SimpleTerms extraction window
+            if (window.location.href.includes('simpleTermsExtraction=true')) {
+                console.log('SimpleTerms: Skipping analysis in extraction window');
+                return;
+            }
+            
             // First, check if we're already on a privacy/terms page
             const currentPageInfo = checkCurrentPageIsPrivacyPage();
             
