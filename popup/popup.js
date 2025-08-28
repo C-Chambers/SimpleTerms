@@ -280,8 +280,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 left: -1000,
                 top: -1000
             }, async (window) => {
-                const tab = window.tabs[0];
                 try {
+                    // Get the tab from the newly created window
+                    const tabs = await chrome.tabs.query({ windowId: window.id });
+                    if (!tabs || tabs.length === 0) {
+                        console.error('No tabs found in extraction window');
+                        chrome.windows.remove(window.id).catch(() => {});
+                        resolve(null);
+                        return;
+                    }
+                    
+                    const tab = tabs[0];
+                    
                     // Wait for the page to load
                     setTimeout(async () => {
                         try {
