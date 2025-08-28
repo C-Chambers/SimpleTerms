@@ -9,13 +9,13 @@
         /privacy[-_\s]?policy/i,           // Matches privacy-policy, privacy_policy, privacy policy
         /privacy[-_\s]?statement/i,        // Matches privacy-statement, privacy_statement, privacy statement
         /privacy[-_\s]?notice/i,           // Matches privacy-notice, privacy_notice, privacy notice
-        /\/privacy\/?$/i,                  // Matches /privacy/ or /privacy (simple privacy paths)
+        /\/privacy\//i,                    // Matches /privacy/ anywhere in URL
         /data[-_\s]?protection/i,          // Matches data-protection, data protection, etc.
         /privacy/i,                        // General privacy match
         /terms[-_\s]?of[-_\s]?service/i,   // Matches terms-of-service, terms of service, etc.
         /terms[-_\s]?and[-_\s]?conditions/i, // Matches terms-and-conditions, terms and conditions, etc.
         /terms[-_\s]?of[-_\s]?use/i,       // Matches terms-of-use, terms of use, etc.
-        /\/terms\/?$/i,                    // Matches /terms/ or /terms (simple terms paths)
+        /\/terms\//i,                      // Matches /terms/ anywhere in URL
         /legal/i,
         /gdpr/i
     ];
@@ -25,11 +25,11 @@
         /privacy[-_\s]?policy/i,           // Matches privacy-policy, privacy_policy, privacy policy
         /privacy[-_\s]?statement/i,        // Matches privacy-statement, privacy_statement, privacy statement
         /privacy[-_\s]?notice/i,           // Matches privacy-notice, privacy_notice, privacy notice
-        /\/privacy\/?$/i,                  // Matches /privacy/ or /privacy (simple privacy paths)
+        /\/privacy\//i,                    // Matches /privacy/ anywhere in URL
         /terms[-_\s]?of[-_\s]?service/i,   // Matches terms-of-service, terms of service, etc.
         /terms[-_\s]?and[-_\s]?conditions/i, // Matches terms-and-conditions, terms and conditions, etc.
         /terms[-_\s]?of[-_\s]?use/i,       // Matches terms-of-use, terms of use, etc.
-        /\/terms\/?$/i,                    // Matches /terms/ or /terms (simple terms paths)
+        /\/terms\//i,                      // Matches /terms/ anywhere in URL
         /data[-_\s]?protection/i,          // Matches data-protection, data protection, etc.
         /cookie[-_\s]?policy/i,            // Matches cookie-policy, cookie policy, etc.
         /legal[-_\s]?notice/i,             // Matches legal-notice, legal notice, etc.
