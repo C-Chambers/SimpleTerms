@@ -85,13 +85,18 @@ exports.analyzePrivacyPolicy = async (req, res) => {
       });
     }
 
-    console.log(`Processing privacy policy analysis (${policyText.length} characters) from origin: ${origin}`);
+    // Optimize text length for faster processing
+    const maxTextLength = 30000; // 30KB should capture essential policy info
+    const optimizedText = policyText.length > maxTextLength 
+      ? policyText.substring(0, maxTextLength) + '\n\n[Policy truncated for faster processing]'
+      : policyText;
 
-    // Add simple rate limiting protection
-    await rateLimitDelay();
+    console.log(`Processing privacy policy analysis (${optimizedText.length} characters) from origin: ${origin}`);
+
+    // Rate limiting removed - Gemini 2.5 Flash has 1,000 RPM (sufficient for extension usage)
 
     // Analyze privacy policy with Gemini AI
-    const analysis = await analyzeWithGemini(policyText);
+    const analysis = await analyzeWithGemini(optimizedText);
 
     // Return successful response
     res.status(200).json({
@@ -148,31 +153,22 @@ async function rateLimitDelay() {
  */
 async function analyzeWithGemini(policyText) {
   try {
-    // Get the Gemini model
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    // Get the Gemini model with speed optimizations
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-2.5-flash',
+      generationConfig: {
+        maxOutputTokens: 500,    // Limit output for faster generation
+        temperature: 0.1,        // Lower temperature = faster, more focused responses
+        topP: 0.8,              // Reduced randomness for speed
+        topK: 10                // Fewer candidate tokens for speed
+      }
+    });
 
     // Construct the analysis prompt
-    const prompt = `You are a helpful privacy assistant. Summarize this privacy policy in exactly 7 simple, concise bullet points that are easy for regular users to understand. Focus on:
+    const prompt = `Analyze this privacy policy. Return JSON with:
+1. "summary": 7 bullet points (max 15 words each) on data collection, usage, sharing, rights, retention, security, concerns  
+2. "score": risk 1-10 (1=minimal, 10=invasive)
 
-• What personal data is collected
-• How it's used 
-• If it's shared with third parties
-• User control and rights
-• Data retention
-• Security protections
-• Any concerning practices
-
-Keep each bullet point under 15 words. Use plain language, not legal jargon. Be specific but concise.
-
-2. Assign a privacy risk score from 1-10 where:
-   1-3 = Minimal data collection, strong user control, transparent practices
-   4-6 = Moderate collection, some third-party sharing, standard practices  
-   7-8 = Extensive collection, significant sharing, limited user control
-   9-10 = Invasive tracking, broad sharing, weak user rights
-
-Return the result as a single, clean JSON object with two keys: summary (a string with markdown bullet points) and score (an integer).
-
-Privacy Policy Text:
 ${policyText}`;
 
     console.log('Sending request to Gemini AI...');
