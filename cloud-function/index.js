@@ -9,7 +9,8 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Chrome Extension ID - Set via environment variable for production
-const ALLOWED_EXTENSION_ID = process.env.EXTENSION_ID || 'YOUR_PRODUCTION_EXTENSION_ID';
+// Default to test extension ID for unpacked development
+const ALLOWED_EXTENSION_ID = process.env.EXTENSION_ID || 'doiijdjjldampcdmgkefblfkofkhaeln';
 
 // Rate limiting - track requests per IP
 const requestTracker = new Map();
