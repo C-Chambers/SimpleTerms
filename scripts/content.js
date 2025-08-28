@@ -593,6 +593,9 @@
         }
     }
 
+    // Expose function globally for popup to trigger
+    window.analyzePageForPrivacyPolicy = analyzePageForPrivacyPolicy;
+
     // Execute the analysis
     analyzePageForPrivacyPolicy();
 })();

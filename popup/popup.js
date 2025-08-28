@@ -69,10 +69,21 @@ document.addEventListener('DOMContentLoaded', function() {
             // Get the active tab
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             
-            // Inject and execute the content script
+            // Trigger analysis in existing content script (don't re-inject)
             await chrome.scripting.executeScript({
                 target: { tabId: tab.id },
-                files: ['scripts/content.js']
+                func: () => {
+                    // Trigger the analysis function that's already loaded
+                    if (window.analyzePageForPrivacyPolicy) {
+                        window.analyzePageForPrivacyPolicy();
+                    } else {
+                        // Fallback: content script not loaded, send error
+                        chrome.runtime.sendMessage({
+                            type: 'ERROR',
+                            error: 'Content script not loaded'
+                        });
+                    }
+                }
             });
 
         } catch (error) {
