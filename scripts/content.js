@@ -593,9 +593,14 @@
         }
     }
 
-    // Expose function globally for popup to trigger
-    window.analyzePageForPrivacyPolicy = analyzePageForPrivacyPolicy;
+    // Listen for messages from popup to trigger analysis
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.type === 'TRIGGER_ANALYSIS') {
+            console.log('SimpleTerms: Received trigger from popup, running analysis');
+            analyzePageForPrivacyPolicy();
+        }
+    });
 
-    // Execute the analysis
+    // Execute the analysis when content script first loads
     analyzePageForPrivacyPolicy();
 })();
