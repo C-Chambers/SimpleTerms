@@ -123,7 +123,10 @@
             const pageTitle = (document.title || '').toLowerCase();
             const pageContent = document.body ? document.body.textContent.toLowerCase() : '';
             
-            // Check URL for privacy/terms patterns
+            console.log('SimpleTerms: Checking current page - URL:', currentUrl);
+            console.log('SimpleTerms: Page title:', pageTitle);
+            
+            // Check URL for privacy/terms patterns (most reliable indicator)
             const urlMatches = currentPagePatterns.some(pattern => pattern.test(currentUrl));
             
             // Check page title for privacy/terms patterns
@@ -148,15 +151,18 @@
             
             const strongContentMatches = strongIndicators.some(pattern => pattern.test(contentSample));
             
-            // Calculate confidence score
+            // Calculate confidence score with stronger URL weighting
             let confidence = 0;
-            if (urlMatches) confidence += 40;
+            if (urlMatches) confidence += 60;  // Increased from 40 - URL is most reliable
             if (titleMatches) confidence += 30;
-            if (contentMatches) confidence += 20;
+            if (contentMatches) confidence += 15;  // Reduced from 20
             if (strongContentMatches) confidence += 20;
             
-            // Require minimum confidence threshold
-            if (confidence >= 50) {
+            console.log('SimpleTerms: Detection scores - URL:', urlMatches ? 60 : 0, 'Title:', titleMatches ? 30 : 0, 'Content:', contentMatches ? 15 : 0, 'Strong:', strongContentMatches ? 20 : 0);
+            console.log('SimpleTerms: Total confidence:', confidence);
+            
+            // Lower threshold and prioritize URL matches
+            if (confidence >= 45 || urlMatches) {  // If URL matches, we're confident regardless of other factors
                 console.log('SimpleTerms: Current page detected as privacy/terms page (confidence:', confidence + ')');
                 return {
                     url: window.location.href,
@@ -166,6 +172,7 @@
                 };
             }
             
+            console.log('SimpleTerms: Current page not detected as privacy page (confidence too low:', confidence + ')');
             return null;
             
         } catch (error) {
@@ -183,11 +190,10 @@
             // Create a copy of the page content
             const contentElement = document.body ? document.body.cloneNode(true) : document.documentElement;
             
-            // Remove unwanted elements
+            // Remove only the most obvious unwanted elements (less aggressive)
             const unwantedSelectors = [
-                'script', 'style', 'nav', 'header', 'footer', 'aside',
-                '.menu', '.navigation', '.sidebar', '.ads', '.advertisement',
-                '.social-media', '.related-links', '.breadcrumb', '.pagination'
+                'script', 'style', 'nav[role="navigation"]', 'aside[role="complementary"]',
+                '.menu', '.navigation', '.ads', '.advertisement'
             ];
             
             unwantedSelectors.forEach(selector => {
@@ -198,14 +204,12 @@
             // Get clean text content
             let text = contentElement.textContent || contentElement.innerText || '';
             
-            // Clean up the text
+            // Clean up the text but preserve more content
             text = text
                 .replace(/\s+/g, ' ')  // Replace multiple whitespace with single space
-                .replace(/\n\s*\n/g, '\n')  // Remove empty lines
                 .trim();
             
-            // Remove common navigation patterns
-            text = text.replace(/\b(home|about|contact|sitemap|terms|privacy|cookie|legal)\s*[\|\/]/gi, '');
+            console.log('SimpleTerms: Extracted current page content length:', text.length);
             
             return text;
             
@@ -227,7 +231,10 @@
                 // We're on a privacy/terms page - analyze current content
                 const pageContent = extractCurrentPageContent();
                 
-                if (pageContent && pageContent.length > 200) {
+                console.log('SimpleTerms: Current page detected as privacy page');
+                console.log('SimpleTerms: Extracted content length:', pageContent.length);
+                
+                if (pageContent && pageContent.length > 100) {  // Lowered from 200 to 100
                     console.log('SimpleTerms: Analyzing current privacy/terms page content');
                     chrome.runtime.sendMessage({
                         type: 'CURRENT_PAGE_IS_POLICY',
@@ -239,8 +246,10 @@
                     });
                     return;
                 } else {
-                    console.log('SimpleTerms: Current page detected as privacy page but content too short, falling back to link search');
+                    console.log('SimpleTerms: Current page detected as privacy page but content too short (' + pageContent.length + ' chars), falling back to link search');
                 }
+            } else {
+                console.log('SimpleTerms: Current page not detected as privacy page, searching for links');
             }
             
             // If not on a privacy page, or content extraction failed, search for privacy policy links
