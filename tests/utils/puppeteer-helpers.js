@@ -44,58 +44,51 @@ async function waitForAnalysis(page, timeout = 10000) {
   try {
     console.log('Waiting for analysis to complete...');
     
-    // Wait for the popup to be opened and results to appear
-    // We'll look for either results or error state
+    // Wait for the extension analysis to complete
+    // Look for our actual extension elements
     await page.waitForFunction(() => {
-      // Check if popup is open and has content
-      const popup = document.querySelector('iframe') || 
-                   document.querySelector('[data-extension="simpleterms"]') ||
-                   document.querySelector('.simpleterms-popup');
+      // Look for the results container (this should match our actual popup HTML)
+      const resultsContainer = document.querySelector('#resultsContainer');
+      const summaryList = document.querySelector('.summary-list');
+      const errorMessage = document.querySelector('.error-message');
+      const loadingSpinner = document.querySelector('.loading-spinner');
       
-      if (popup) {
-        const results = popup.querySelector('.results-container') ||
-                       popup.querySelector('.summary-list') ||
-                       popup.querySelector('.error-message');
-        return results !== null;
-      }
-      return false;
+      // Analysis is complete when we have results or an error, and no loading spinner
+      return (resultsContainer && (summaryList || errorMessage)) && !loadingSpinner;
     }, { timeout });
     
-    // Extract the results from the popup
+    // Extract the results from the extension popup
     const results = await page.evaluate(() => {
-      // Find the popup container
-      const popup = document.querySelector('iframe') || 
-                   document.querySelector('[data-extension="simpleterms"]') ||
-                   document.querySelector('.simpleterms-popup');
+      // Look for our actual extension elements (based on popup.html structure)
+      const resultsContainer = document.querySelector('#resultsContainer');
+      const summaryList = document.querySelector('.summary-list');
+      const scoreElement = document.querySelector('#riskScore');
+      const errorElement = document.querySelector('.error-message');
       
-      if (!popup) {
-        return { success: false, error: 'Popup not found' };
+      if (!resultsContainer) {
+        return { success: false, error: 'Results container not found' };
       }
       
-      // Look for summary points
-      const summaryItems = popup.querySelectorAll('.summary-list li') ||
-                          popup.querySelectorAll('[class*="summary"] li') ||
-                          popup.querySelectorAll('li');
-      
-      // Look for risk score
-      const scoreElement = popup.querySelector('.risk-score') ||
-                          popup.querySelector('[class*="score"]') ||
-                          popup.querySelector('[class*="risk"]');
-      
-      // Look for error message
-      const errorElement = popup.querySelector('.error-message') ||
-                          popup.querySelector('[class*="error"]');
-      
+      // Extract summary points
+      const summaryItems = summaryList ? summaryList.querySelectorAll('li') : [];
       const summaryPoints = Array.from(summaryItems)
         .map(li => li.textContent.trim())
         .filter(text => text.length > 0);
       
+      // Extract risk score
+      let riskScore = null;
+      if (scoreElement) {
+        const scoreText = scoreElement.textContent;
+        const scoreMatch = scoreText.match(/\d+/);
+        riskScore = scoreMatch ? parseInt(scoreMatch[0]) : null;
+      }
+      
       return {
         success: !errorElement && summaryPoints.length > 0,
         summaryPoints: summaryPoints,
-        riskScore: scoreElement ? parseInt(scoreElement.textContent) : null,
+        riskScore: riskScore,
         errorMessage: errorElement ? errorElement.textContent.trim() : null,
-        rawHTML: popup.innerHTML // For debugging
+        rawHTML: resultsContainer.innerHTML // For debugging
       };
     });
     
@@ -145,46 +138,67 @@ async function triggerExtensionAnalysis(page) {
   try {
     console.log('Triggering extension analysis...');
     
-    // Method 1: Try to click extension icon in toolbar (if visible)
-    try {
-      await page.click('[data-extension="simpleterms"]', { timeout: 2000 });
-      console.log('Clicked extension icon');
-      return;
-    } catch (e) {
-      console.log('Extension icon not found, trying alternative methods...');
+    // Method 1: Try to navigate to extensions page and click the extension
+    // This is the most reliable way to trigger an extension in automated testing
+    const extensionId = await getExtensionId(page);
+    if (extensionId) {
+      console.log(`Found extension ID: ${extensionId}`);
+      
+      // Open the extension popup
+      const extensionUrl = `chrome-extension://${extensionId}/popup/popup.html`;
+      const popupPage = await page.browser().newPage();
+      await popupPage.goto(extensionUrl);
+      
+      // Click the analyze button in the popup
+      await popupPage.click('#analyzeButton', { timeout: 5000 });
+      console.log('Clicked analyze button in extension popup');
+      
+      // Keep the popup page open for result extraction
+      return popupPage;
     }
     
-    // Method 2: Use Chrome extension API if available
-    try {
-      await page.evaluate(() => {
-        if (window.chrome && window.chrome.runtime) {
-          // Try to trigger extension via runtime API
-          window.chrome.runtime.sendMessage({ action: 'analyze' });
-        }
-      });
-      console.log('Triggered via Chrome API');
-      await page.waitForTimeout(1000); // Give it time to process
-      return;
-    } catch (e) {
-      console.log('Chrome API method failed, trying keyboard shortcut...');
-    }
+    // Method 2: Fallback - simulate keyboard shortcut
+    console.log('Extension ID not found, trying keyboard shortcut...');
+    await page.keyboard.down('Alt');
+    await page.keyboard.press('KeyS'); 
+    await page.keyboard.up('Alt');
+    console.log('Triggered via keyboard shortcut');
     
-    // Method 3: Try keyboard shortcut (if defined)
-    try {
-      await page.keyboard.down('Alt');
-      await page.keyboard.press('KeyS'); // Alt+S for SimpleTerms
-      await page.keyboard.up('Alt');
-      console.log('Triggered via keyboard shortcut');
-      return;
-    } catch (e) {
-      console.log('Keyboard shortcut method failed');
-    }
-    
-    throw new Error('Could not trigger extension analysis - no method succeeded');
+    return null;
     
   } catch (error) {
     console.error('Failed to trigger extension:', error.message);
-    throw error;
+    // Don't throw here - let the test continue and check for results
+    return null;
+  }
+}
+
+/**
+ * Get the extension ID for the SimpleTerms extension
+ * @param {Object} page - Puppeteer page instance
+ * @returns {Promise<string|null>} Extension ID or null if not found
+ */
+async function getExtensionId(page) {
+  try {
+    // Navigate to chrome://extensions to find our extension
+    await page.goto('chrome://extensions/');
+    
+    // Look for SimpleTerms extension
+    const extensionId = await page.evaluate(() => {
+      const extensions = document.querySelectorAll('extensions-item');
+      for (const ext of extensions) {
+        const nameElement = ext.shadowRoot?.querySelector('#name');
+        if (nameElement && nameElement.textContent.includes('SimpleTerms')) {
+          return ext.id;
+        }
+      }
+      return null;
+    });
+    
+    return extensionId;
+  } catch (error) {
+    console.log('Could not get extension ID:', error.message);
+    return null;
   }
 }
 
@@ -211,13 +225,22 @@ async function testSite(url, timeout = 10000) {
     });
     
     // Wait a moment for page to fully load
-    await page.waitForTimeout(2000);
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
     // Trigger extension analysis
-    await triggerExtensionAnalysis(page);
+    const popupPage = await triggerExtensionAnalysis(page);
     
     // Wait for analysis results
-    const results = await waitForAnalysis(page, timeout);
+    const results = await waitForAnalysis(popupPage || page, timeout);
+    
+    // Clean up popup page if it was created
+    if (popupPage) {
+      try {
+        await popupPage.close();
+      } catch (e) {
+        console.warn('Could not close popup page:', e.message);
+      }
+    }
     
     return {
       url,
@@ -252,5 +275,6 @@ module.exports = {
   launchBrowserWithExtension,
   waitForAnalysis,
   triggerExtensionAnalysis,
+  getExtensionId,
   testSite
 };
