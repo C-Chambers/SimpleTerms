@@ -283,6 +283,48 @@
                officialDomainPatterns.some(pattern => pattern.test(href));
     }
 
+    /**
+     * Check if a URL is a privacy settings/preferences page rather than a policy
+     * @param {string} href - The link URL
+     * @param {string} text - The link text content  
+     * @returns {boolean} True if this is a settings page, not a policy
+     */
+    function isPrivacySettingsPage(href, text) {
+        // URL patterns that indicate settings/preferences rather than policies
+        const settingsPatterns = [
+            /privacyprefs/i,                // Privacy preferences
+            /privacy[-_]?settings/i,        // Privacy settings
+            /privacy[-_]?preferences/i,     // Privacy preferences
+            /privacy[-_]?controls/i,        // Privacy controls
+            /privacy[-_]?center/i,          // Privacy center/dashboard
+            /privacy[-_]?dashboard/i,       // Privacy dashboard
+            /data[-_]?controls/i,           // Data controls
+            /ad[-_]?preferences/i,          // Ad preferences
+            /cookie[-_]?settings/i,         // Cookie settings
+        ];
+
+        // Text patterns that indicate settings rather than policies
+        const settingsTextPatterns = [
+            /privacy settings/i,
+            /privacy preferences/i,
+            /privacy controls/i,
+            /manage.*privacy/i,
+            /privacy center/i,
+            /ad preferences/i,
+            /cookie settings/i,
+        ];
+
+        const urlIsSettings = settingsPatterns.some(pattern => pattern.test(href));
+        const textIsSettings = settingsTextPatterns.some(pattern => pattern.test(text));
+
+        if (urlIsSettings || textIsSettings) {
+            console.log('SimpleTerms: Detected privacy settings page (not policy):', href);
+            return true;
+        }
+
+        return false;
+    }
+
     function findPrivacyPolicyLink() {
         try {
             // Get all anchor tags on the page
@@ -327,6 +369,9 @@
                     
                     // BONUS for URLs that are definitely policy pages (not help articles)
                     if (isPolicyPageUrl(href)) score += 20;
+                    
+                    // PENALTY for privacy settings/preferences pages (not actual policies)
+                    if (isPrivacySettingsPage(href, text)) score -= 15;
                     
                     // LOCATION-BASED SCORING (prioritize footer over navigation)
                     const locationScore = calculateLocationScore(link);
