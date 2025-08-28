@@ -12,6 +12,8 @@
     "test:cloud": "jest tests/e2e/cloud-function.test.js",
     "test:problematic": "jest tests/e2e/problematic-sites.test.js",
     "test:regression": "jest tests/e2e/direct-sites.test.js",
+    "test:comprehensive": "jest tests/e2e/comprehensive-50-sites.test.js",
+    "test:comprehensive:run": "node tests/run-comprehensive-tests.js",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
