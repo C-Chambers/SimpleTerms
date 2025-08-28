@@ -364,6 +364,9 @@
                     if (href.includes('privacy-policy') || href.includes('privacy_policy')) score += 15;
                     if (text.includes('privacy policy')) score += 10;
                     
+                    // BONUS for specific policy language (vs generic privacy text)
+                    if (text.includes('privacy notice') || text.includes('privacy statement')) score += 12;
+                    
                     // Penalty for terms-only matches (less specific)
                     if (href.includes('terms') && !href.includes('privacy')) score -= 5;
                     
@@ -371,7 +374,7 @@
                     if (isPolicyPageUrl(href)) score += 20;
                     
                     // PENALTY for privacy settings/preferences pages (not actual policies)
-                    if (isPrivacySettingsPage(href, text)) score -= 15;
+                    if (isPrivacySettingsPage(href, text)) score -= 25;
                     
                     // LOCATION-BASED SCORING (prioritize footer over navigation)
                     const locationScore = calculateLocationScore(link);
