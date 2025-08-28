@@ -1,0 +1,374 @@
+{
+  "testSites": {
+    "ecommerce": [
+      {
+        "name": "Amazon",
+        "url": "https://amazon.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "eBay",
+        "url": "https://ebay.com",
+        "expectedPoints": 7,
+        "timeout": 20000,
+        "type": "problematic"
+      },
+      {
+        "name": "Walmart",
+        "url": "https://walmart.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Target",
+        "url": "https://target.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Best Buy",
+        "url": "https://bestbuy.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      }
+    ],
+    "financial": [
+      {
+        "name": "PayPal",
+        "url": "https://paypal.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Chase Bank",
+        "url": "https://chase.com",
+        "expectedPoints": 7,
+        "timeout": 20000,
+        "type": "problematic"
+      },
+      {
+        "name": "Bank of America",
+        "url": "https://bankofamerica.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Wells Fargo",
+        "url": "https://wellsfargo.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Venmo",
+        "url": "https://venmo.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      }
+    ],
+    "technology": [
+      {
+        "name": "Microsoft",
+        "url": "https://microsoft.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Google",
+        "url": "https://google.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Apple",
+        "url": "https://apple.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "GitHub",
+        "url": "https://github.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Stack Overflow",
+        "url": "https://stackoverflow.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      }
+    ],
+    "media": [
+      {
+        "name": "Spotify",
+        "url": "https://spotify.com",
+        "expectedPoints": 7,
+        "timeout": 40000,
+        "type": "static"
+      },
+      {
+        "name": "NY Times",
+        "url": "https://nytimes.com",
+        "expectedPoints": 7,
+        "timeout": 20000,
+        "type": "static"
+      },
+      {
+        "name": "Netflix",
+        "url": "https://netflix.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "dynamic"
+      },
+      {
+        "name": "YouTube",
+        "url": "https://youtube.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "dynamic"
+      },
+      {
+        "name": "CNN",
+        "url": "https://cnn.com",
+        "expectedPoints": 7,
+        "timeout": 20000,
+        "type": "problematic"
+      }
+    ],
+    "social": [
+      {
+        "name": "Facebook",
+        "url": "https://facebook.com",
+        "expectedPoints": 7,
+        "timeout": 20000,
+        "type": "dynamic"
+      },
+      {
+        "name": "LinkedIn",
+        "url": "https://linkedin.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "dynamic"
+      },
+      {
+        "name": "Twitter/X",
+        "url": "https://x.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "dynamic"
+      },
+      {
+        "name": "Instagram",
+        "url": "https://instagram.com",
+        "expectedPoints": 7,
+        "timeout": 20000,
+        "type": "problematic"
+      },
+      {
+        "name": "Reddit",
+        "url": "https://reddit.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      }
+    ],
+    "productivity": [
+      {
+        "name": "Notion",
+        "url": "https://notion.so",
+        "expectedPoints": 7,
+        "timeout": 20000,
+        "type": "dynamic"
+      },
+      {
+        "name": "Slack",
+        "url": "https://slack.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Zoom",
+        "url": "https://zoom.us",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Dropbox",
+        "url": "https://dropbox.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Trello",
+        "url": "https://trello.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      }
+    ],
+    "travel": [
+      {
+        "name": "Airbnb",
+        "url": "https://airbnb.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "dynamic"
+      },
+      {
+        "name": "Booking.com",
+        "url": "https://booking.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Expedia",
+        "url": "https://expedia.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Uber",
+        "url": "https://uber.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "TripAdvisor",
+        "url": "https://tripadvisor.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      }
+    ],
+    "education": [
+      {
+        "name": "Khan Academy",
+        "url": "https://khanacademy.org",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Coursera",
+        "url": "https://coursera.org",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Udemy",
+        "url": "https://udemy.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "MIT OpenCourseWare",
+        "url": "https://ocw.mit.edu",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Duolingo",
+        "url": "https://duolingo.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      }
+    ],
+    "health": [
+      {
+        "name": "WebMD",
+        "url": "https://webmd.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Mayo Clinic",
+        "url": "https://mayoclinic.org",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "MyFitnessPal",
+        "url": "https://myfitnesspal.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Healthline",
+        "url": "https://healthline.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "CVS",
+        "url": "https://cvs.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      }
+    ],
+    "gaming": [
+      {
+        "name": "Steam",
+        "url": "https://store.steampowered.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Epic Games",
+        "url": "https://epicgames.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Twitch",
+        "url": "https://twitch.tv",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "dynamic"
+      },
+      {
+        "name": "Discord",
+        "url": "https://discord.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      },
+      {
+        "name": "Xbox",
+        "url": "https://xbox.com",
+        "expectedPoints": 7,
+        "timeout": 15000,
+        "type": "static"
+      }
+    ]
+  }
+}
