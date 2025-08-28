@@ -269,81 +269,113 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     async function tryAdvancedExtraction(policyUrl) {
         return new Promise((resolve) => {
-            // Create a new window with the tab (more invisible than tab in current window)
-            // Try creating a regular tab first, then minimize the window
-            chrome.tabs.create({ 
-                url: policyUrl + (policyUrl.includes('?') ? '&' : '?') + 'simpleTermsExtraction=true',
-                active: false
-            }, async (tab) => {
-                if (!tab || !tab.id) {
-                    console.error('Failed to create extraction tab');
+            console.log('Attempting iframe-based extraction for:', policyUrl);
+            
+            // Create hidden iframe in current page for content extraction
+            // This avoids tab/window manipulation entirely
+            chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+                if (!tabs[0]) {
+                    console.error('No active tab found');
                     resolve(null);
                     return;
                 }
                 
-                // Get the window containing the tab and minimize it
-                const window = await chrome.windows.get(tab.windowId);
-                if (window) {
-                    chrome.windows.update(tab.windowId, { 
-                        state: 'minimized',
-                        focused: false 
-                    }).catch(() => {
-                        // If minimizing fails, that's okay - continue with extraction
-                        console.log('Could not minimize window, continuing with extraction');
-                    });
-                }
                 try {
-                    
-                    // Wait for the page to load
-                    setTimeout(async () => {
-                        try {
-                            // Inject content script to extract page content
-                            const results = await chrome.scripting.executeScript({
-                                target: { tabId: tab.id },
-                                func: () => {
-                                    // Remove unwanted elements
-                                    const unwantedSelectors = [
-                                        'script', 'style', 'nav', 'header', 'footer', 'aside',
-                                        '.menu', '.navigation', '.sidebar', '.ads', '.advertisement',
-                                        '.social-share', '.comments', '.related-articles'
-                                    ];
-                                    
-                                    unwantedSelectors.forEach(selector => {
-                                        document.querySelectorAll(selector).forEach(el => el.remove());
-                                    });
-                                    
-                                    // Extract main content
-                                    const mainContent = document.querySelector('main') || 
-                                                       document.querySelector('[role="main"]') || 
-                                                       document.querySelector('.content') ||
-                                                       document.querySelector('#content') ||
-                                                       document.body;
-                                    
-                                    let text = mainContent ? mainContent.textContent : document.body.textContent;
-                                    
-                                    // Clean up the text
-                                    text = text
-                                        .replace(/\s+/g, ' ')
-                                        .replace(/\n\s*\n/g, '\n')
-                                        .trim();
-                                    
-                                    return text;
-                                }
+                    // Inject iframe creation and content extraction script
+                    const results = await chrome.scripting.executeScript({
+                        target: { tabId: tabs[0].id },
+                        func: (url) => {
+                            return new Promise((resolve) => {
+                                // Create hidden iframe
+                                const iframe = document.createElement('iframe');
+                                iframe.style.display = 'none';
+                                iframe.style.position = 'absolute';
+                                iframe.style.left = '-9999px';
+                                iframe.style.width = '1px';
+                                iframe.style.height = '1px';
+                                iframe.src = url + (url.includes('?') ? '&' : '?') + 'simpleTermsExtraction=true';
+                                
+                                // Cleanup function
+                                const cleanup = () => {
+                                    if (iframe.parentNode) {
+                                        iframe.parentNode.removeChild(iframe);
+                                    }
+                                };
+                                
+                                // Set timeout for extraction
+                                const timeout = setTimeout(() => {
+                                    console.error('Iframe extraction timeout');
+                                    cleanup();
+                                    resolve(null);
+                                }, 8000);
+                                
+                                iframe.onload = () => {
+                                    try {
+                                        // Wait a bit for dynamic content to load
+                                        setTimeout(() => {
+                                            try {
+                                                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                                                
+                                                // Remove unwanted elements
+                                                const unwantedSelectors = [
+                                                    'script', 'style', 'nav', 'header', 'footer', 'aside',
+                                                    '.menu', '.navigation', '.sidebar', '.ads', '.advertisement'
+                                                ];
+                                                
+                                                unwantedSelectors.forEach(selector => {
+                                                    iframeDoc.querySelectorAll(selector).forEach(el => el.remove());
+                                                });
+                                                
+                                                // Extract main content
+                                                const mainContent = iframeDoc.querySelector('main') || 
+                                                                   iframeDoc.querySelector('[role="main"]') || 
+                                                                   iframeDoc.querySelector('.content') ||
+                                                                   iframeDoc.querySelector('#content') ||
+                                                                   iframeDoc.body;
+                                                
+                                                let text = mainContent ? mainContent.textContent : iframeDoc.body.textContent;
+                                                
+                                                // Clean up the text
+                                                text = text
+                                                    .replace(/\s+/g, ' ')
+                                                    .replace(/\n\s*\n/g, '\n')
+                                                    .trim();
+                                                
+                                                clearTimeout(timeout);
+                                                cleanup();
+                                                resolve(text);
+                                            } catch (extractError) {
+                                                console.error('Error extracting content from iframe:', extractError);
+                                                clearTimeout(timeout);
+                                                cleanup();
+                                                resolve(null);
+                                            }
+                                        }, 3000);
+                                    } catch (error) {
+                                        console.error('Error accessing iframe content:', error);
+                                        clearTimeout(timeout);
+                                        cleanup();
+                                        resolve(null);
+                                    }
+                                };
+                                
+                                iframe.onerror = () => {
+                                    console.error('Iframe failed to load');
+                                    clearTimeout(timeout);
+                                    cleanup();
+                                    resolve(null);
+                                };
+                                
+                                // Add iframe to page
+                                document.body.appendChild(iframe);
                             });
-                            
-                            // Close the tab
-                            chrome.tabs.remove(tab.id);
-                            
-                            // Return the extracted content
-                            resolve(results[0]?.result || null);
-                        } catch (error) {
-                            console.error('Error in advanced extraction:', error);
-                            chrome.tabs.remove(tab.id).catch(() => {});
-                            resolve(null);
-                        }
-                    }, 4000); // Wait 4 seconds for dynamic content to load and avoid double analysis
+                        },
+                        args: [policyUrl]
+                    });
+                    
+                    resolve(results[0]?.result || null);
                 } catch (error) {
-                    console.error('Error creating tab for advanced extraction:', error);
+                    console.error('Error in iframe-based extraction:', error);
                     resolve(null);
                 }
             });
