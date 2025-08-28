@@ -269,8 +269,18 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     async function tryAdvancedExtraction(policyUrl) {
         return new Promise((resolve) => {
-            // Create a new tab to load the privacy policy
-            chrome.tabs.create({ url: policyUrl, active: false }, async (tab) => {
+            // Create a new window with the tab (more invisible than tab in current window)
+            chrome.windows.create({ 
+                url: policyUrl + (policyUrl.includes('?') ? '&' : '?') + 'simpleTermsExtraction=true', 
+                type: 'popup',
+                state: 'minimized',
+                focused: false,
+                width: 1,
+                height: 1,
+                left: -1000,
+                top: -1000
+            }, async (window) => {
+                const tab = window.tabs[0];
                 try {
                     // Wait for the page to load
                     setTimeout(async () => {
@@ -309,17 +319,17 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                             });
                             
-                            // Close the tab
-                            chrome.tabs.remove(tab.id);
+                            // Close the entire window
+                            chrome.windows.remove(window.id);
                             
                             // Return the extracted content
                             resolve(results[0]?.result || null);
                         } catch (error) {
                             console.error('Error in advanced extraction:', error);
-                            chrome.tabs.remove(tab.id).catch(() => {});
+                            chrome.windows.remove(window.id).catch(() => {});
                             resolve(null);
                         }
-                    }, 3000); // Wait 3 seconds for dynamic content to load
+                    }, 4000); // Wait 4 seconds for dynamic content to load and avoid double analysis
                 } catch (error) {
                     console.error('Error creating tab for advanced extraction:', error);
                     resolve(null);
