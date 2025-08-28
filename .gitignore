@@ -45,3 +45,36 @@ temp/
 
 # Local test data
 local-test-data/
+
+# Test results and logs
+tests/results/*.log
+tests/results/*-summary.json
+
+# Production/store submission files
+store-assets/
+simpleterms-production/
+simpleterms-v*.zip
+
+# Cloud function local testing
+cloud-function/node_modules/
+cloud-function/.env*
+cloud-function/package-lock.json
+
+# Extension development files
+*.crx.bak
+extension-key.pem
+
+# OS generated files
+desktop.ini
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Backup files
+*.backup
+*.bak
+*_backup/
+
+# Debug files
+debug.log
+chrome-debug.log
