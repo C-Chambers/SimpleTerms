@@ -1,0 +1,100 @@
+{
+  "staticSites": [
+    {
+      "name": "Amazon",
+      "url": "https://amazon.com",
+      "expectedPoints": 7,
+      "timeout": 10000,
+      "category": "e-commerce"
+    },
+    {
+      "name": "eBay", 
+      "url": "https://ebay.com",
+      "expectedPoints": 7,
+      "timeout": 10000,
+      "category": "e-commerce"
+    },
+    {
+      "name": "PayPal",
+      "url": "https://paypal.com", 
+      "expectedPoints": 7,
+      "timeout": 10000,
+      "category": "financial"
+    },
+    {
+      "name": "Chase Bank",
+      "url": "https://chase.com",
+      "expectedPoints": 7,
+      "timeout": 10000,
+      "category": "financial"
+    },
+    {
+      "name": "Microsoft",
+      "url": "https://microsoft.com",
+      "expectedPoints": 7,
+      "timeout": 10000,
+      "category": "technology"
+    },
+    {
+      "name": "Google",
+      "url": "https://google.com",
+      "expectedPoints": 7,
+      "timeout": 10000,
+      "category": "technology"
+    },
+    {
+      "name": "Spotify",
+      "url": "https://spotify.com",
+      "expectedPoints": 7,
+      "timeout": 10000,
+      "category": "media"
+    },
+    {
+      "name": "NY Times",
+      "url": "https://nytimes.com",
+      "expectedPoints": 7,
+      "timeout": 10000,
+      "category": "media"
+    }
+  ],
+  "dynamicSites": [
+    {
+      "name": "Notion",
+      "url": "https://notion.so",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "category": "productivity",
+      "requiresAdvancedExtraction": true
+    },
+    {
+      "name": "Facebook",
+      "url": "https://facebook.com",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "category": "social",
+      "requiresAdvancedExtraction": true
+    },
+    {
+      "name": "LinkedIn",
+      "url": "https://linkedin.com",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "category": "professional",
+      "requiresAdvancedExtraction": false
+    }
+  ],
+  "knownFailures": [
+    {
+      "name": "CNN",
+      "url": "https://cnn.com",
+      "expectedBehavior": "dynamic_content_error",
+      "category": "media"
+    },
+    {
+      "name": "Instagram", 
+      "url": "https://instagram.com",
+      "expectedBehavior": "multiple_tab_bug",
+      "category": "social"
+    }
+  ]
+}
