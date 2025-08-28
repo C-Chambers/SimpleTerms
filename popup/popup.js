@@ -13,6 +13,29 @@ document.addEventListener('DOMContentLoaded', function() {
         return div.innerHTML;
     }
 
+    // Format URL for display - show hostname + path, truncate if too long
+    function formatUrlForDisplay(url) {
+        try {
+            const urlObj = new URL(url);
+            let displayUrl = urlObj.hostname + urlObj.pathname;
+            
+            // Remove trailing slash
+            if (displayUrl.endsWith('/')) {
+                displayUrl = displayUrl.slice(0, -1);
+            }
+            
+            // Truncate if too long (keep it readable in the UI)
+            if (displayUrl.length > 40) {
+                displayUrl = displayUrl.substring(0, 37) + '...';
+            }
+            
+            return displayUrl;
+        } catch (error) {
+            // Fallback to just hostname if URL parsing fails
+            return url.includes('://') ? url.split('://')[1].split('/')[0] : url;
+        }
+    }
+
     /**
      * Fetch policy content using background script to bypass CSP restrictions
      * @param {string} policyUrl - URL of the privacy policy to fetch
@@ -266,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </ul>
             </div>
             <div style="margin-top: 10px; font-size: 12px; color: #6c757d; text-align: center;">
-                Analyzed: <a href="${escapeHtml(policyUrl)}" target="_blank" style="color: #667eea;">Privacy Policy</a>
+                Analyzed: <a href="${escapeHtml(policyUrl)}" target="_blank" style="color: #667eea;" title="${escapeHtml(policyUrl)}">${escapeHtml(formatUrlForDisplay(policyUrl))}</a>
             </div>
         `;
     }
@@ -311,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </ul>
             </div>
             <div style="margin-top: 10px; font-size: 12px; color: #6c757d; text-align: center;">
-                Current Page: <a href="${escapeHtml(policyUrl)}" target="_blank" style="color: #667eea;">${escapeHtml(new URL(policyUrl).hostname)}</a>
+                Current Page: <a href="${escapeHtml(policyUrl)}" target="_blank" style="color: #667eea;" title="${escapeHtml(policyUrl)}">${escapeHtml(formatUrlForDisplay(policyUrl))}</a>
             </div>
         `;
     }
