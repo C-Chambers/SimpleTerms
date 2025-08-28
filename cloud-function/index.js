@@ -140,7 +140,11 @@ async function analyzeWithGemini(policyText) {
 
 Keep each bullet point under 15 words. Use plain language, not legal jargon. Be specific but concise.
 
-Also assign a privacy risk score from 1 (very safe) to 10 (very invasive) based on how much the policy respects user privacy.
+2. Assign a privacy risk score from 1-10 where:
+   1-3 = Minimal data collection, strong user control, transparent practices
+   4-6 = Moderate collection, some third-party sharing, standard practices  
+   7-8 = Extensive collection, significant sharing, limited user control
+   9-10 = Invasive tracking, broad sharing, weak user rights
 
 Return the result as a single, clean JSON object with two keys: summary (a string with markdown bullet points) and score (an integer).
 
