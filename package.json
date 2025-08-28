@@ -8,7 +8,10 @@
     "test:unit": "jest tests/unit",
     "test:e2e": "jest tests/e2e",
     "test:static": "jest tests/e2e/static-sites.test.js",
-    "test:regression": "jest tests/e2e/static-sites.test.js",
+    "test:direct": "jest tests/e2e/direct-sites.test.js",
+    "test:cloud": "jest tests/e2e/cloud-function.test.js",
+    "test:problematic": "jest tests/e2e/problematic-sites.test.js",
+    "test:regression": "jest tests/e2e/direct-sites.test.js",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
@@ -25,6 +28,7 @@
   "homepage": "https://github.com/C-Chambers/SimpleTerms#readme",
   "devDependencies": {
     "jest": "^30.1.1",
+    "node-fetch": "^3.3.2",
     "puppeteer": "^24.17.0"
   }
 }

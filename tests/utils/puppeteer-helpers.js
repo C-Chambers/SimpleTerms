@@ -19,9 +19,12 @@ async function launchBrowserWithExtension() {
       '--disable-features=TranslateUI',
       '--disable-ipc-flooding-protection',
       '--no-sandbox',
-      '--disable-setuid-sandbox'
+      '--disable-setuid-sandbox',
+      '--disable-blink-features=AutomationControlled',
+      '--disable-dev-shm-usage'
     ],
-    ignoreDefaultArgs: ['--disable-extensions']
+    ignoreDefaultArgs: ['--disable-extensions'],
+    defaultViewport: null
   });
   
   // Get the extension page
@@ -180,22 +183,60 @@ async function triggerExtensionAnalysis(page) {
  */
 async function getExtensionId(page) {
   try {
-    // Navigate to chrome://extensions to find our extension
+    // First, try to get extension ID from the browser context
+    const extensionId = await page.evaluate(() => {
+      return new Promise((resolve) => {
+        if (window.chrome && window.chrome.management) {
+          chrome.management.getAll((extensions) => {
+            const simpleTerms = extensions.find(ext => 
+              ext.name.includes('SimpleTerms') && ext.enabled
+            );
+            resolve(simpleTerms ? simpleTerms.id : null);
+          });
+        } else {
+          resolve(null);
+        }
+      });
+    });
+    
+    if (extensionId) {
+      console.log('Found extension ID via chrome.management:', extensionId);
+      return extensionId;
+    }
+    
+    // Fallback: Navigate to chrome://extensions
+    console.log('Trying chrome://extensions method...');
     await page.goto('chrome://extensions/');
     
+    // Enable developer mode first
+    await page.evaluate(() => {
+      const devModeToggle = document.querySelector('extensions-manager')
+        ?.shadowRoot?.querySelector('#devMode');
+      if (devModeToggle && !devModeToggle.checked) {
+        devModeToggle.click();
+      }
+    });
+    
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     // Look for SimpleTerms extension
-    const extensionId = await page.evaluate(() => {
-      const extensions = document.querySelectorAll('extensions-item');
-      for (const ext of extensions) {
-        const nameElement = ext.shadowRoot?.querySelector('#name');
-        if (nameElement && nameElement.textContent.includes('SimpleTerms')) {
-          return ext.id;
+    const fallbackId = await page.evaluate(() => {
+      const manager = document.querySelector('extensions-manager');
+      if (manager && manager.shadowRoot) {
+        const items = manager.shadowRoot.querySelectorAll('extensions-item');
+        for (const item of items) {
+          if (item.shadowRoot) {
+            const nameEl = item.shadowRoot.querySelector('#name');
+            if (nameEl && nameEl.textContent.includes('SimpleTerms')) {
+              return item.id;
+            }
+          }
         }
       }
       return null;
     });
     
-    return extensionId;
+    return fallbackId;
   } catch (error) {
     console.log('Could not get extension ID:', error.message);
     return null;
