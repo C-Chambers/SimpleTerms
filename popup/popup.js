@@ -281,6 +281,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 top: -1000
             }, async (window) => {
                 try {
+                    // Check if window creation was successful
+                    if (!window || !window.id) {
+                        console.error('Failed to create extraction window');
+                        resolve(null);
+                        return;
+                    }
+                    
                     // Get the tab from the newly created window
                     const tabs = await chrome.tabs.query({ windowId: window.id });
                     if (!tabs || tabs.length === 0) {
@@ -336,7 +343,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             resolve(results[0]?.result || null);
                         } catch (error) {
                             console.error('Error in advanced extraction:', error);
-                            chrome.windows.remove(window.id).catch(() => {});
+                            if (window && window.id) {
+                                chrome.windows.remove(window.id).catch(() => {});
+                            }
                             resolve(null);
                         }
                     }, 4000); // Wait 4 seconds for dynamic content to load and avoid double analysis
