@@ -37,6 +37,178 @@
         /gdpr/i
     ];
 
+    /**
+     * Calculate location-based score - prioritize footer over header/navigation
+     * @param {Element} link - The link element to analyze
+     * @returns {number} Score modifier (-10 to +15)
+     */
+    function calculateLocationScore(link) {
+        const rect = link.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        const linkTop = rect.top;
+        
+        // Check if link is in footer area (bottom 20% of page)
+        if (linkTop > windowHeight * 0.8) {
+            return 15; // Strong preference for footer links
+        }
+        
+        // Check if link is in header area (top 15% of page)
+        if (linkTop < windowHeight * 0.15) {
+            return -5; // Slight penalty for header links
+        }
+        
+        // Check for common footer selectors
+        let current = link.parentElement;
+        while (current && current !== document.body) {
+            const tagName = current.tagName.toLowerCase();
+            const className = (current.className || '').toLowerCase();
+            const id = (current.id || '').toLowerCase();
+            
+            // Footer indicators
+            if (tagName === 'footer' || 
+                className.includes('footer') || 
+                id.includes('footer') ||
+                className.includes('bottom') ||
+                className.includes('site-footer')) {
+                return 12;
+            }
+            
+            // Navigation/header penalties
+            if (tagName === 'nav' || tagName === 'header' ||
+                className.includes('nav') || 
+                className.includes('header') ||
+                className.includes('menu') ||
+                className.includes('dropdown')) {
+                return -8;
+            }
+            
+            current = current.parentElement;
+        }
+        
+        return 0; // Neutral score for middle content
+    }
+
+    /**
+     * Calculate context-based score - avoid hidden elements and dropdowns
+     * @param {Element} link - The link element to analyze
+     * @returns {number} Score modifier (-15 to +5)
+     */
+    function calculateContextScore(link) {
+        let score = 0;
+        
+        // Check if element is visible
+        const style = window.getComputedStyle(link);
+        if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+            return -15; // Heavy penalty for hidden elements
+        }
+        
+        // Check for dropdown/menu context
+        let current = link.parentElement;
+        while (current && current !== document.body) {
+            const className = (current.className || '').toLowerCase();
+            const id = (current.id || '').toLowerCase();
+            
+            // Dropdown/menu penalties
+            if (className.includes('dropdown') || 
+                className.includes('submenu') ||
+                className.includes('mega-menu') ||
+                className.includes('nav-menu') ||
+                id.includes('dropdown') ||
+                current.hasAttribute('aria-expanded')) {
+                score -= 10;
+            }
+            
+            // Legal/footer section bonuses
+            if (className.includes('legal') ||
+                className.includes('links') ||
+                className.includes('policy-links') ||
+                id.includes('legal')) {
+                score += 5;
+            }
+            
+            current = current.parentElement;
+        }
+        
+        return score;
+    }
+
+    /**
+     * Calculate quality-based score - prefer specific link text over generic
+     * @param {Element} link - The link element to analyze
+     * @param {string} text - The link text content
+     * @returns {number} Score modifier (-5 to +10)
+     */
+    function calculateQualityScore(link, text) {
+        let score = 0;
+        
+        // Prefer specific privacy policy text
+        if (text === 'privacy policy' || text === 'privacy' || text === 'privacy statement') {
+            score += 8;
+        }
+        
+        // Bonus for standalone links (not buried in long text)
+        if (text.length < 30 && text.includes('privacy')) {
+            score += 5;
+        }
+        
+        // Penalty for very generic text
+        if (text.length > 100 || 
+            text.includes('more') || 
+            text.includes('click here') ||
+            text.includes('learn more')) {
+            score -= 5;
+        }
+        
+        // Check link styling (footer links often have specific styling)
+        const style = window.getComputedStyle(link);
+        const fontSize = parseInt(style.fontSize);
+        
+        // Small footer links often indicate real policy links
+        if (fontSize < 14) {
+            score += 3;
+        }
+        
+        return score;
+    }
+
+    /**
+     * Get human-readable location description for debugging
+     * @param {Element} link - The link element
+     * @returns {string} Location description
+     */
+    function getElementLocation(link) {
+        let current = link.parentElement;
+        while (current && current !== document.body) {
+            const tagName = current.tagName.toLowerCase();
+            const className = (current.className || '').toLowerCase();
+            
+            if (tagName === 'footer' || className.includes('footer')) return 'footer';
+            if (tagName === 'header' || className.includes('header')) return 'header';
+            if (tagName === 'nav' || className.includes('nav')) return 'navigation';
+            if (className.includes('dropdown')) return 'dropdown';
+            
+            current = current.parentElement;
+        }
+        return 'content';
+    }
+
+    /**
+     * Get element context for debugging
+     * @param {Element} link - The link element
+     * @returns {string} Context description
+     */
+    function getElementContext(link) {
+        const rect = link.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        const position = rect.top > windowHeight * 0.8 ? 'bottom' : 
+                        rect.top < windowHeight * 0.15 ? 'top' : 'middle';
+        
+        const style = window.getComputedStyle(link);
+        const visible = style.display !== 'none' && style.visibility !== 'hidden';
+        
+        return `${position}, ${visible ? 'visible' : 'hidden'}`;
+    }
+
     function findPrivacyPolicyLink() {
         try {
             // Get all anchor tags on the page
@@ -74,11 +246,25 @@
                     // Penalty for terms-only matches (less specific)
                     if (href.includes('terms') && !href.includes('privacy')) score -= 5;
                     
+                    // LOCATION-BASED SCORING (prioritize footer over navigation)
+                    const locationScore = calculateLocationScore(link);
+                    score += locationScore;
+                    
+                    // CONTEXT-BASED SCORING (avoid dropdowns and hidden elements)
+                    const contextScore = calculateContextScore(link);
+                    score += contextScore;
+                    
+                    // LINK QUALITY SCORING (prefer standalone links over generic text)
+                    const qualityScore = calculateQualityScore(link, text);
+                    score += qualityScore;
+                    
                     candidates.push({
                         url: link.href,
                         text: text,
                         score: score,
-                        element: link
+                        element: link,
+                        location: getElementLocation(link),
+                        context: getElementContext(link)
                     });
                 }
             });
@@ -88,7 +274,14 @@
             
             if (candidates.length > 0) {
                 const bestMatch = candidates[0];
-                console.log('SimpleTerms: Found privacy policy link:', bestMatch.url);
+                
+                // Enhanced logging for debugging link selection
+                console.log('SimpleTerms: Found', candidates.length, 'privacy policy candidates');
+                console.log('SimpleTerms: Top 3 candidates:');
+                candidates.slice(0, 3).forEach((candidate, index) => {
+                    console.log(`  ${index + 1}. Score: ${candidate.score}, Text: "${candidate.text}", URL: ${candidate.url}, Location: ${candidate.location}, Context: ${candidate.context}`);
+                });
+                console.log('SimpleTerms: Selected best match:', bestMatch.url);
                 
                 // Send the URL to the popup
                 chrome.runtime.sendMessage({
