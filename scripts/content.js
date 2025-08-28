@@ -209,6 +209,86 @@
         return `${position}, ${visible ? 'visible' : 'hidden'}`;
     }
 
+    /**
+     * Check if a link points to non-policy content (help articles, support pages, etc.)
+     * @param {string} href - The link URL
+     * @param {string} text - The link text content
+     * @returns {boolean} True if this is non-policy content to skip
+     */
+    function isNonPolicyContent(href, text) {
+        // Help center and support page patterns
+        const nonPolicyPatterns = [
+            /zendesk\.com\/hc\//i,           // Zendesk help center
+            /support\./i,                   // Support subdomains
+            /help\./i,                      // Help subdomains
+            /\/help\//i,                    // Help center paths
+            /\/support\//i,                 // Support paths
+            /\/hc\//i,                      // Help center paths
+            /\/kb\//i,                      // Knowledge base paths
+            /\/faq/i,                       // FAQ pages
+            /\/articles\//i,                // Article pages
+            /\/guides\//i,                  // Guide pages
+            /freshdesk\.com/i,              // Freshdesk support
+            /intercom\.help/i,              // Intercom help
+            /confluence\./i,                // Confluence docs
+            /notion\./i,                    // Notion help pages
+            /gitbook\./i,                   // GitBook documentation
+        ];
+
+        // Check if URL matches non-policy patterns
+        if (nonPolicyPatterns.some(pattern => pattern.test(href))) {
+            console.log('SimpleTerms: Skipping non-policy content:', href);
+            return true;
+        }
+
+        // Check for help/support-related text patterns
+        const nonPolicyTextPatterns = [
+            /how to.*privacy/i,
+            /privacy.*help/i,
+            /privacy.*support/i,
+            /privacy.*guide/i,
+            /privacy.*article/i,
+            /privacy.*faq/i,
+            /about.*privacy/i,
+            /understanding.*privacy/i,
+            /privacy.*questions/i,
+        ];
+
+        if (nonPolicyTextPatterns.some(pattern => pattern.test(text))) {
+            console.log('SimpleTerms: Skipping help content based on text:', text);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if a URL is definitely a policy page (not a help article about policies)
+     * @param {string} href - The link URL
+     * @returns {boolean} True if this is definitely a policy page
+     */
+    function isPolicyPageUrl(href) {
+        // Strong indicators this is an actual policy page
+        const policyPagePatterns = [
+            /\/privacy\/?$/i,               // Ends with /privacy
+            /\/privacy-policy\/?$/i,        // Ends with /privacy-policy
+            /\/privacy_policy\/?$/i,        // Ends with /privacy_policy
+            /\/legal\/privacy/i,            // Legal section privacy
+            /\/policies\/privacy/i,         // Policies section
+            /\/terms-and-privacy/i,         // Combined terms and privacy
+            /\/privacy\.html?$/i,           // Privacy HTML file
+            /\/privacy\.php$/i,             // Privacy PHP file
+        ];
+
+        // Check for domain patterns that indicate official policy pages
+        const officialDomainPatterns = [
+            /^https?:\/\/[^\/]*\/(privacy|legal|policies)/i,  // Direct legal/privacy paths
+        ];
+
+        return policyPagePatterns.some(pattern => pattern.test(href)) ||
+               officialDomainPatterns.some(pattern => pattern.test(href));
+    }
+
     function findPrivacyPolicyLink() {
         try {
             // Get all anchor tags on the page
@@ -223,6 +303,11 @@
                 
                 // Skip mailto, tel, and javascript links
                 if (href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) {
+                    return;
+                }
+
+                // Skip help center articles, support pages, and other non-policy content
+                if (isNonPolicyContent(href, text)) {
                     return;
                 }
 
@@ -245,6 +330,9 @@
                     
                     // Penalty for terms-only matches (less specific)
                     if (href.includes('terms') && !href.includes('privacy')) score -= 5;
+                    
+                    // BONUS for URLs that are definitely policy pages (not help articles)
+                    if (isPolicyPageUrl(href)) score += 20;
                     
                     // LOCATION-BASED SCORING (prioritize footer over navigation)
                     const locationScore = calculateLocationScore(link);
