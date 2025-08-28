@@ -128,26 +128,21 @@ async function analyzeWithGemini(policyText) {
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     // Construct the analysis prompt
-    const prompt = `You are an expert privacy analyst. Analyze this privacy policy and provide:
+    const prompt = `You are a helpful privacy assistant. Summarize this privacy policy in exactly 7 simple, concise bullet points that are easy for regular users to understand. Focus on:
 
-1. Create exactly 7 concise bullet points covering:
-   • What specific personal data is collected (be specific: emails, names, location, cookies, etc.)
-   • How this data is used (marketing, analytics, service improvement, etc.)
-   • Who data is shared with (specific third parties, advertisers, partners)
-   • User rights and control options (opt-out, deletion, access rights)
-   • Data retention and storage practices
-   • Security measures and protections mentioned
-   • Any concerning or unusual practices
+• What personal data is collected
+• How it's used 
+• If it's shared with third parties
+• User control and rights
+• Data retention
+• Security protections
+• Any concerning practices
 
-2. Assign a privacy risk score from 1-10 where:
-   1-3 = Minimal data collection, strong user control, transparent practices
-   4-6 = Moderate collection, some third-party sharing, standard practices  
-   7-8 = Extensive collection, significant sharing, limited user control
-   9-10 = Invasive tracking, broad sharing, weak user rights
+Keep each bullet point under 15 words. Use plain language, not legal jargon. Be specific but concise.
 
-Be specific about data types and practices. Focus on actionable information users need to make informed decisions.
+Also assign a privacy risk score from 1 (very safe) to 10 (very invasive) based on how much the policy respects user privacy.
 
-Return as clean JSON: {"summary": "• Point 1\n• Point 2\n...", "score": integer}
+Return the result as a single, clean JSON object with two keys: summary (a string with markdown bullet points) and score (an integer).
 
 Privacy Policy Text:
 ${policyText}`;
