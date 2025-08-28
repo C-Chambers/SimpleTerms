@@ -241,6 +241,91 @@
     }
 
     /**
+     * Find and test potential menu triggers that might contain hidden privacy links
+     * @returns {Promise<Array>} Array of found privacy links from hidden menus
+     */
+    async function findHiddenMenuPrivacyLinks() {
+        console.log('SimpleTerms: Searching for hidden menu privacy links...');
+        const foundLinks = [];
+        
+        try {
+            // Common selectors for menu triggers that might hide privacy links
+            const triggerSelectors = [
+                'button:not([aria-expanded="true"])',  // Collapsed buttons
+                '[aria-expanded="false"]',             // ARIA-expanded false
+                '[role="button"]:not([aria-expanded="true"])', // Role buttons
+                'button[aria-haspopup]',               // Buttons with popups
+                '*[class*="menu"]:not([aria-expanded="true"])', // Menu elements
+                '*[class*="dropdown"]:not([aria-expanded="true"])', // Dropdown elements
+            ];
+            
+            for (const selector of triggerSelectors) {
+                const triggers = document.querySelectorAll(selector);
+                
+                for (const trigger of triggers) {
+                    const text = (trigger.textContent || '').toLowerCase().trim();
+                    const ariaLabel = (trigger.getAttribute('aria-label') || '').toLowerCase();
+                    
+                    // Look for triggers that might contain privacy links
+                    if (text.includes('more') || text.includes('menu') || text.includes('options') ||
+                        ariaLabel.includes('more') || ariaLabel.includes('menu') || ariaLabel.includes('options') ||
+                        text.includes('⋮') || text.includes('···')) {
+                        
+                        console.log('SimpleTerms: Testing menu trigger:', text || ariaLabel || 'no text');
+                        
+                        // Check if trigger is visible
+                        const style = window.getComputedStyle(trigger);
+                        if (style.display === 'none' || style.visibility === 'hidden') {
+                            continue;
+                        }
+                        
+                        try {
+                            // Click the trigger
+                            trigger.click();
+                            
+                            // Wait for menu to appear
+                            await new Promise(resolve => setTimeout(resolve, 300));
+                            
+                            // Search for newly appeared privacy links
+                            const allLinks = document.querySelectorAll('a[href]');
+                            const newPrivacyLinks = [];
+                            
+                            allLinks.forEach(link => {
+                                const href = link.href.toLowerCase();
+                                const linkText = (link.textContent || '').toLowerCase().trim();
+                                const title = (link.title || '').toLowerCase();
+                                
+                                if ((href.includes('privacy') || linkText.includes('privacy') || title.includes('privacy') ||
+                                     href.includes('legal') || linkText.includes('legal') || title.includes('legal')) &&
+                                    window.getComputedStyle(link).display !== 'none') {
+                                    
+                                    newPrivacyLinks.push(link);
+                                }
+                            });
+                            
+                            if (newPrivacyLinks.length > 0) {
+                                console.log('SimpleTerms: Found privacy links in hidden menu!');
+                                foundLinks.push(...newPrivacyLinks);
+                                
+                                // Don't click more triggers if we found links
+                                return foundLinks;
+                            }
+                            
+                        } catch (error) {
+                            console.log('SimpleTerms: Error testing menu trigger:', error.message);
+                        }
+                    }
+                }
+            }
+            
+        } catch (error) {
+            console.log('SimpleTerms: Error in hidden menu search:', error.message);
+        }
+        
+        return foundLinks;
+    }
+
+    /**
      * Check if a link points to non-policy content (help articles, support pages, etc.)
      * @param {string} href - The link URL
      * @param {string} text - The link text content
@@ -391,7 +476,7 @@
         }
     }
 
-    function findPrivacyPolicyLink() {
+    async function findPrivacyPolicyLink() {
         try {
             // Get all anchor tags on the page (including Shadow DOM)
             const links = findAllLinksIncludingShadowDOM();
@@ -508,10 +593,84 @@
                     }))
                 });
             } else {
-                console.log('SimpleTerms: No privacy policy link found (searched regular and shadow DOM)');
-                chrome.runtime.sendMessage({
-                    type: 'NO_POLICY_FOUND'
-                });
+                console.log('SimpleTerms: No privacy policy links found in regular/shadow DOM, trying hidden menus...');
+                
+                // Try to find privacy links in hidden menus
+                const hiddenMenuLinks = await findHiddenMenuPrivacyLinks();
+                
+                if (hiddenMenuLinks.length > 0) {
+                    console.log('SimpleTerms: Found privacy links in hidden menus!');
+                    
+                    // Process hidden menu links the same way as regular links
+                    const hiddenCandidates = [];
+                    
+                    hiddenMenuLinks.forEach(link => {
+                        const href = link.href.toLowerCase();
+                        const text = (link.textContent || '').toLowerCase().trim();
+                        const title = (link.title || '').toLowerCase();
+                        
+                        // Skip filtering for hidden menu links since they're already filtered
+                        const urlMatches = privacyPatterns.some(pattern => pattern.test(href));
+                        const textMatches = privacyPatterns.some(pattern => pattern.test(text));
+                        const titleMatches = privacyPatterns.some(pattern => pattern.test(title));
+                        
+                        if (urlMatches || textMatches || titleMatches) {
+                            let score = 0;
+                            
+                            // Higher score for URL matches
+                            if (urlMatches) score += 10;
+                            if (textMatches) score += 5;
+                            if (titleMatches) score += 3;
+                            
+                            // Bonus for exact matches
+                            if (href.includes('privacy-policy') || href.includes('privacy_policy')) score += 15;
+                            if (text.includes('privacy policy')) score += 10;
+                            
+                            // Bonus for being found in hidden menu
+                            score += 5;
+                            
+                            hiddenCandidates.push({
+                                url: link.href,
+                                text: text,
+                                score: score,
+                                element: link,
+                                location: 'hidden-menu',
+                                context: 'found in dropdown menu'
+                            });
+                        }
+                    });
+                    
+                    if (hiddenCandidates.length > 0) {
+                        // Sort by score
+                        hiddenCandidates.sort((a, b) => b.score - a.score);
+                        
+                        console.log('SimpleTerms: Found', hiddenCandidates.length, 'privacy policy candidates in hidden menus');
+                        hiddenCandidates.forEach((candidate, index) => {
+                            console.log(`  ${index + 1}. Score: ${candidate.score}, Text: "${candidate.text}", URL: ${candidate.url}`);
+                        });
+                        
+                        // Send the best candidates
+                        const topHiddenCandidates = hiddenCandidates.slice(0, 3);
+                        chrome.runtime.sendMessage({
+                            type: 'POLICY_URLS_FOUND',
+                            policies: topHiddenCandidates.map(candidate => ({
+                                url: candidate.url,
+                                text: candidate.text,
+                                score: candidate.score
+                            }))
+                        });
+                    } else {
+                        console.log('SimpleTerms: No valid privacy policy candidates found in hidden menus');
+                        chrome.runtime.sendMessage({
+                            type: 'NO_POLICY_FOUND'
+                        });
+                    }
+                } else {
+                    console.log('SimpleTerms: No privacy policy link found (searched regular DOM, shadow DOM, and hidden menus)');
+                    chrome.runtime.sendMessage({
+                        type: 'NO_POLICY_FOUND'
+                    });
+                }
             }
 
         } catch (error) {
@@ -669,7 +828,13 @@
             }
             
             // If not on a privacy page, or content extraction failed, search for privacy policy links
-            findPrivacyPolicyLink();
+            findPrivacyPolicyLink().catch(error => {
+                console.error('SimpleTerms: Error in findPrivacyPolicyLink:', error);
+                chrome.runtime.sendMessage({
+                    type: 'ERROR',
+                    error: 'Failed to search for privacy policy links'
+                });
+            });
             
         } catch (error) {
             console.error('SimpleTerms: Error in main analysis function:', error);

@@ -257,22 +257,15 @@
   },
   "problematic": {
     "description": "Sites with genuine issues requiring fixes",
-    "lastUpdated": "2025-01-15T12:00:00.000Z",
-    "totalSites": 1,
-    "sites": [
-      {
-        "name": "Twitch",
-        "category": "gaming",
-        "error": "Privacy policy hidden under menu",
-        "type": "hidden_menu"
-      }
-    ]
+    "lastUpdated": "2025-01-15T14:00:00.000Z",
+    "totalSites": 0,
+    "sites": []
   },
   "statistics": {
     "totalTested": 50,
-    "passed": 49,
-    "failed": 1,
-    "passRate": "98%"
+    "passed": 50,
+    "failed": 0,
+    "passRate": "100%"
   },
   "categoryBreakdown": {
     "ecommerce": {

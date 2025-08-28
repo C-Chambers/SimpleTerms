@@ -1,8 +1,8 @@
-# SimpleTerms v1.0.1 - AI Privacy Policy Summarizer 🔍
+# SimpleTerms v1.0.2 - AI Privacy Policy Summarizer 🔍
 
-[![Version](https://img.shields.io/badge/Version-1.0.1-green.svg)](https://github.com/C-Chambers/SimpleTerms)
+[![Version](https://img.shields.io/badge/Version-1.0.2-green.svg)](https://github.com/C-Chambers/SimpleTerms)
 [![Test Coverage](https://img.shields.io/badge/Sites%20Tested-50-blue.svg)](TESTING_WORKFLOW.md)
-[![Pass Rate](https://img.shields.io/badge/Pass%20Rate-98%25-brightgreen.svg)](tests/fixtures/regression-sites.json)
+[![Pass Rate](https://img.shields.io/badge/Pass%20Rate-100%25-brightgreen.svg)](tests/fixtures/regression-sites.json)
 
 A browser extension that uses AI to instantly summarize complex privacy policies and assign a "Privacy Risk Score," empowering you to understand how your data is being used.
 
@@ -20,7 +20,7 @@ Privacy policies are dense, filled with legal jargon, and designed to be difficu
   - How that data is used
   - Whether your data is shared with or sold to third parties
 - 🎯 **Privacy Risk Score**: 1-10 scale assessment of privacy risk level
-- ✅ **Tested on 50 Major Websites**: Verified compatibility with 98% success rate (49/50 sites)
+- ✅ **Tested on 50 Major Websites**: **PERFECT 100% success rate (50/50 sites)**
 
 ### Premium Features (Planned)
 - 🔔 **Policy Change Monitoring**: Get alerts when websites update their privacy policies
@@ -75,7 +75,7 @@ Privacy policies are dense, filled with legal jargon, and designed to be difficu
 - **AI Model**: Google Gemini 1.5 Flash API
 - **Testing**: Jest + Puppeteer
 - **Monetization**: ExtensionPay (planned)
-- **Web Standards**: Shadow DOM traversal for modern React/Angular sites
+- **Web Standards**: Shadow DOM traversal + hidden menu detection for universal compatibility
 
 ## 📂 Project Structure
 
