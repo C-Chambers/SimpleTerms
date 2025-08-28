@@ -1,0 +1,331 @@
+{
+  "description": "Sites that consistently pass testing - used for regression testing",
+  "lastUpdated": "2025-08-28T18:00:00Z",
+  "totalSites": 36,
+  "sites": [
+    {
+      "name": "Walmart",
+      "url": "https://walmart.com",
+      "category": "ecommerce",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 7,
+      "status": "stable"
+    },
+    {
+      "name": "Target",
+      "url": "https://target.com",
+      "category": "ecommerce",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 6,
+      "status": "stable"
+    },
+    {
+      "name": "PayPal",
+      "url": "https://paypal.com",
+      "category": "financial",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 8,
+      "status": "stable"
+    },
+    {
+      "name": "Bank of America",
+      "url": "https://bankofamerica.com",
+      "category": "financial",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 7,
+      "status": "stable"
+    },
+    {
+      "name": "Wells Fargo",
+      "url": "https://wellsfargo.com",
+      "category": "financial",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 7,
+      "status": "stable"
+    },
+    {
+      "name": "Venmo",
+      "url": "https://venmo.com",
+      "category": "financial",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 6,
+      "status": "stable"
+    },
+    {
+      "name": "Microsoft",
+      "url": "https://microsoft.com",
+      "category": "technology",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 5,
+      "status": "stable"
+    },
+    {
+      "name": "Google",
+      "url": "https://google.com",
+      "category": "technology",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 6,
+      "status": "stable"
+    },
+    {
+      "name": "Apple",
+      "url": "https://apple.com",
+      "category": "technology",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 4,
+      "status": "stable"
+    },
+    {
+      "name": "GitHub",
+      "url": "https://github.com",
+      "category": "technology",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 5,
+      "status": "stable"
+    },
+    {
+      "name": "Spotify",
+      "url": "https://spotify.com",
+      "category": "media",
+      "expectedPoints": 7,
+      "timeout": 40000,
+      "lastPassedRiskScore": 6,
+      "status": "stable"
+    },
+    {
+      "name": "NY Times",
+      "url": "https://nytimes.com",
+      "category": "media",
+      "expectedPoints": 7,
+      "timeout": 20000,
+      "lastPassedRiskScore": 7,
+      "status": "stable"
+    },
+    {
+      "name": "Netflix",
+      "url": "https://netflix.com",
+      "category": "media",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 6,
+      "status": "stable"
+    },
+    {
+      "name": "Facebook",
+      "url": "https://facebook.com",
+      "category": "social",
+      "expectedPoints": 7,
+      "timeout": 20000,
+      "lastPassedRiskScore": 8,
+      "status": "stable"
+    },
+    {
+      "name": "LinkedIn",
+      "url": "https://linkedin.com",
+      "category": "social",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 7,
+      "status": "stable"
+    },
+    {
+      "name": "Twitter/X",
+      "url": "https://x.com",
+      "category": "social",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 7,
+      "status": "stable"
+    },
+    {
+      "name": "Notion",
+      "url": "https://notion.so",
+      "category": "productivity",
+      "expectedPoints": 7,
+      "timeout": 20000,
+      "lastPassedRiskScore": 6,
+      "status": "stable"
+    },
+    {
+      "name": "Slack",
+      "url": "https://slack.com",
+      "category": "productivity",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 6,
+      "status": "stable"
+    },
+    {
+      "name": "Zoom",
+      "url": "https://zoom.us",
+      "category": "productivity",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 7,
+      "status": "stable"
+    },
+    {
+      "name": "Dropbox",
+      "url": "https://dropbox.com",
+      "category": "productivity",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 6,
+      "status": "stable"
+    },
+    {
+      "name": "Trello",
+      "url": "https://trello.com",
+      "category": "productivity",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 5,
+      "status": "stable"
+    },
+    {
+      "name": "Airbnb",
+      "url": "https://airbnb.com",
+      "category": "travel",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 7,
+      "status": "stable"
+    },
+    {
+      "name": "Uber",
+      "url": "https://uber.com",
+      "category": "travel",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 7,
+      "status": "stable"
+    },
+    {
+      "name": "Khan Academy",
+      "url": "https://khanacademy.org",
+      "category": "education",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 4,
+      "status": "stable"
+    },
+    {
+      "name": "Coursera",
+      "url": "https://coursera.org",
+      "category": "education",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 6,
+      "status": "stable"
+    },
+    {
+      "name": "Udemy",
+      "url": "https://udemy.com",
+      "category": "education",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 7,
+      "status": "stable"
+    },
+    {
+      "name": "MIT OpenCourseWare",
+      "url": "https://ocw.mit.edu",
+      "category": "education",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 3,
+      "status": "stable"
+    },
+    {
+      "name": "WebMD",
+      "url": "https://webmd.com",
+      "category": "health",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 8,
+      "status": "stable"
+    },
+    {
+      "name": "Mayo Clinic",
+      "url": "https://mayoclinic.org",
+      "category": "health",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 5,
+      "status": "stable"
+    },
+    {
+      "name": "Healthline",
+      "url": "https://healthline.com",
+      "category": "health",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 7,
+      "status": "stable"
+    },
+    {
+      "name": "Steam",
+      "url": "https://store.steampowered.com",
+      "category": "gaming",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 6,
+      "status": "stable"
+    },
+    {
+      "name": "Discord",
+      "url": "https://discord.com",
+      "category": "gaming",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 7,
+      "status": "stable"
+    },
+    {
+      "name": "Xbox",
+      "url": "https://xbox.com",
+      "category": "gaming",
+      "expectedPoints": 7,
+      "timeout": 15000,
+      "lastPassedRiskScore": 6,
+      "status": "stable"
+    },
+    {
+      "name": "eBay",
+      "url": "https://ebay.com",
+      "category": "ecommerce",
+      "expectedPoints": 7,
+      "timeout": 20000,
+      "lastPassedRiskScore": 7,
+      "status": "stable"
+    },
+    {
+      "name": "Chase Bank",
+      "url": "https://chase.com",
+      "category": "financial",
+      "expectedPoints": 7,
+      "timeout": 20000,
+      "lastPassedRiskScore": 7,
+      "status": "stable"
+    },
+    {
+      "name": "Instagram",
+      "url": "https://instagram.com",
+      "category": "social",
+      "expectedPoints": 7,
+      "timeout": 20000,
+      "lastPassedRiskScore": 8,
+      "status": "stable"
+    }
+  ]
+}

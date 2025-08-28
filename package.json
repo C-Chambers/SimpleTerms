@@ -11,9 +11,11 @@
     "test:direct": "jest tests/e2e/direct-sites.test.js",
     "test:cloud": "jest tests/e2e/cloud-function.test.js",
     "test:problematic": "jest tests/e2e/problematic-sites.test.js",
-    "test:regression": "jest tests/e2e/direct-sites.test.js",
     "test:comprehensive": "jest tests/e2e/comprehensive-50-sites.test.js",
     "test:comprehensive:run": "node tests/run-comprehensive-tests.js",
+    "test:categorize": "node tests/categorize-results.js",
+    "test:regression": "jest tests/e2e/regression-sites.test.js",
+    "test:problematic:focus": "jest tests/e2e/problematic-sites-focused.test.js",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
