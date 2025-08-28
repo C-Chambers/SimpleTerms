@@ -593,25 +593,11 @@
         }
     }
 
-    // Check if this is a manual trigger from popup or automatic load
+    // Only run analysis when manually triggered by user clicking the button
     if (window.simpleTermsManualTrigger) {
-        // This is a manual trigger from popup 
-        if (window.simpleTermsExecuted) {
-            // Analysis already done - don't run again to prevent duplicate messages
-            console.log('SimpleTerms: Manual trigger detected, but analysis already completed - skipping to prevent duplicates');
-        } else {
-            // First time - run analysis
-            console.log('SimpleTerms: Manual trigger detected, running analysis');
-            window.simpleTermsExecuted = true;
-            analyzePageForPrivacyPolicy();
-        }
-    } else if (!window.simpleTermsExecuted) {
-        // This is the first automatic load - run analysis and mark as executed
-        console.log('SimpleTerms: First automatic load, running analysis');
-        window.simpleTermsExecuted = true;
+        console.log('SimpleTerms: Manual trigger detected, running analysis');
         analyzePageForPrivacyPolicy();
     } else {
-        // This script has already run, skip to prevent duplicates
-        console.log('SimpleTerms: Already executed, skipping to prevent duplicates');
+        console.log('SimpleTerms: Content script loaded but waiting for manual trigger');
     }
 })();
