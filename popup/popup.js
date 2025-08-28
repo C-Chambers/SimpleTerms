@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (dynamicContent && dynamicContent.length > 100) {
                         console.log(`Tab ${tabIndex} - Advanced extraction successful:`, dynamicContent.length, 'characters');
                         const analysisResult = await analyzeWithCloudFunction(dynamicContent);
-                        displayResultsInTab(analysisResult.score, analysisResult.summary, policy.url, tabIndex);
+                        displayResultsInTab(analysisResult.score, analysisResult.summary, policy.url, tabIndex, policy.text);
                         return;
                     }
                 }
@@ -250,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const analysisResult = await analyzeWithCloudFunction(policyText);
             
             // Display results in the specific tab
-            displayResultsInTab(analysisResult.score, analysisResult.summary, policy.url, tabIndex);
+            displayResultsInTab(analysisResult.score, analysisResult.summary, policy.url, tabIndex, policy.text);
             
         } catch (error) {
             console.error(`Error analyzing policy for tab ${tabIndex}:`, error);
@@ -258,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function displayResultsInTab(score, summary, policyUrl, tabIndex) {
+    function displayResultsInTab(score, summary, policyUrl, tabIndex, policyText) {
         const tabContent = document.getElementById(`tab-content-${tabIndex}`);
         if (!tabContent) return;
         
@@ -276,6 +276,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const summaryHtml = summary.map(point => `<li>${escapeHtml(point)}</li>`).join('');
 
         tabContent.innerHTML = `
+            <div class="document-title">
+                <div style="font-size: 14px; font-weight: 600; color: #495057; text-align: center; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #667eea;">
+                    📄 ${escapeHtml(policyText || 'Privacy Policy')}
+                </div>
+            </div>
             <div class="score-container">
                 <div class="score-label">Privacy Risk Score</div>
                 <div class="score-value ${scoreClass}">${score}/10</div>
@@ -293,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         // Store result
-        policyResults[tabIndex] = { score, summary, policyUrl };
+        policyResults[tabIndex] = { score, summary, policyUrl, policyText };
     }
 
     function displayErrorInTab(errorMessage, tabIndex) {
@@ -606,6 +611,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const summaryHtml = summary.map(point => `<li>${escapeHtml(point)}</li>`).join('');
 
         resultsContainer.innerHTML = `
+            <div class="document-title">
+                <div style="font-size: 14px; font-weight: 600; color: #495057; text-align: center; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #667eea;">
+                    📄 Privacy Policy
+                </div>
+            </div>
             <div class="score-container">
                 <div class="score-label">Privacy Risk Score</div>
                 <div class="score-value ${scoreClass}">${score}/10</div>
