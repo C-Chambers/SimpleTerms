@@ -179,10 +179,24 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Extracted text content:', policyText.length, 'characters');
 
             if (!policyText || policyText.length < 100) {
-                // For dynamic content sites, provide more helpful guidance
+                // For dynamic content sites, try advanced extraction
                 if (policyUrl.includes('facebook.com') || policyUrl.includes('instagram.com') || 
                     policyUrl.includes('twitter.com') || policyUrl.includes('linkedin.com') ||
                     policyUrl.includes('tiktok.com') || policyUrl.includes('snapchat.com')) {
+                    
+                    console.log('Detected dynamic content site, attempting advanced extraction...');
+                    showLoading('Trying advanced content extraction...');
+                    
+                    const dynamicContent = await tryAdvancedExtraction(policyUrl);
+                    if (dynamicContent && dynamicContent.length > 100) {
+                        console.log('Advanced extraction successful:', dynamicContent.length, 'characters');
+                        showLoading('Analyzing privacy policy with AI...');
+                        const analysisResult = await analyzeWithCloudFunction(dynamicContent);
+                        displayResults(analysisResult.score, analysisResult.summary, policyUrl);
+                        resetButton();
+                        return;
+                    }
+                    
                     throw new Error('Dynamic content detected: This site loads content with JavaScript. Navigate to the privacy policy page first, then click the extension button on that page.');
                 }
                 throw new Error('Privacy policy content appears to be too short or empty');
@@ -246,6 +260,72 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error extracting text from HTML:', error);
             return '';
         }
+    }
+
+    /**
+     * Try advanced content extraction for dynamic sites by opening in new tab
+     * @param {string} policyUrl - URL of the privacy policy
+     * @returns {Promise<string>} Extracted content or null if failed
+     */
+    async function tryAdvancedExtraction(policyUrl) {
+        return new Promise((resolve) => {
+            // Create a new tab to load the privacy policy
+            chrome.tabs.create({ url: policyUrl, active: false }, async (tab) => {
+                try {
+                    // Wait for the page to load
+                    setTimeout(async () => {
+                        try {
+                            // Inject content script to extract page content
+                            const results = await chrome.scripting.executeScript({
+                                target: { tabId: tab.id },
+                                func: () => {
+                                    // Remove unwanted elements
+                                    const unwantedSelectors = [
+                                        'script', 'style', 'nav', 'header', 'footer', 'aside',
+                                        '.menu', '.navigation', '.sidebar', '.ads', '.advertisement',
+                                        '.social-share', '.comments', '.related-articles'
+                                    ];
+                                    
+                                    unwantedSelectors.forEach(selector => {
+                                        document.querySelectorAll(selector).forEach(el => el.remove());
+                                    });
+                                    
+                                    // Extract main content
+                                    const mainContent = document.querySelector('main') || 
+                                                       document.querySelector('[role="main"]') || 
+                                                       document.querySelector('.content') ||
+                                                       document.querySelector('#content') ||
+                                                       document.body;
+                                    
+                                    let text = mainContent ? mainContent.textContent : document.body.textContent;
+                                    
+                                    // Clean up the text
+                                    text = text
+                                        .replace(/\s+/g, ' ')
+                                        .replace(/\n\s*\n/g, '\n')
+                                        .trim();
+                                    
+                                    return text;
+                                }
+                            });
+                            
+                            // Close the tab
+                            chrome.tabs.remove(tab.id);
+                            
+                            // Return the extracted content
+                            resolve(results[0]?.result || null);
+                        } catch (error) {
+                            console.error('Error in advanced extraction:', error);
+                            chrome.tabs.remove(tab.id).catch(() => {});
+                            resolve(null);
+                        }
+                    }, 3000); // Wait 3 seconds for dynamic content to load
+                } catch (error) {
+                    console.error('Error creating tab for advanced extraction:', error);
+                    resolve(null);
+                }
+            });
+        });
     }
 
     /**
