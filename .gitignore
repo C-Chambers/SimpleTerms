@@ -34,12 +34,23 @@ partnerships/
 .DS_Store
 Thumbs.db
 
+# Development and debugging
+BUGFIX_LOG.md
+DEBUG_NOTES.md
+TESTING_STRATEGY.md
+
 # Logs
 *.log
 npm-debug.log*
 
 # Dependencies
 node_modules/
+package-lock.json
+
+# Test outputs
+coverage/
+*.lcov
+test-results/
 
 # Build outputs
 dist/

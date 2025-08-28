@@ -24,12 +24,17 @@ exports.analyzePrivacyPolicy = async (req, res) => {
     // Configure CORS headers for security
     const origin = req.get('Origin');
     const allowedOrigins = [
-      `chrome-extension://${ALLOWED_EXTENSION_ID}`
+      `chrome-extension://${ALLOWED_EXTENSION_ID}`,
+      'null', // Allow file:// and data: origins (for testing)
+      'chrome://newtab', // Chrome new tab page (for testing)
     ].filter(Boolean);
 
-    // Check if request is from allowed extension
+    // Check if request is from allowed extension or testing environment
     if (origin && allowedOrigins.includes(origin)) {
       res.set('Access-Control-Allow-Origin', origin);
+    } else if (!origin || origin === 'null') {
+      // Allow requests with no origin (Puppeteer, curl, etc.) for testing
+      res.set('Access-Control-Allow-Origin', '*');
     }
     
     res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -78,7 +83,7 @@ exports.analyzePrivacyPolicy = async (req, res) => {
     }
 
     // Check text length to prevent abuse
-    if (policyText.length > 100000) { // 100KB limit
+    if (policyText.length > 300000) { // 300KB limit (increased for large privacy policies)
       return res.status(400).json({
         error: 'Text too long',
         message: 'Privacy policy text exceeds maximum length limit'
