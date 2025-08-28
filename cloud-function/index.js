@@ -128,7 +128,26 @@ async function analyzeWithGemini(policyText) {
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     // Construct the analysis prompt
-    const prompt = `You are a helpful privacy assistant. First, summarize this privacy policy in no more than five simple bullet points, focusing on what personal data is collected, how it is used, and if it is shared with third parties. Second, based on the text, assign a privacy risk score from 1 (very safe) to 10 (very invasive). Return the result as a single, clean JSON object with two keys: summary (a string with markdown bullet points) and score (an integer).
+    const prompt = `You are an expert privacy analyst. Analyze this privacy policy and provide:
+
+1. Create exactly 7 concise bullet points covering:
+   • What specific personal data is collected (be specific: emails, names, location, cookies, etc.)
+   • How this data is used (marketing, analytics, service improvement, etc.)
+   • Who data is shared with (specific third parties, advertisers, partners)
+   • User rights and control options (opt-out, deletion, access rights)
+   • Data retention and storage practices
+   • Security measures and protections mentioned
+   • Any concerning or unusual practices
+
+2. Assign a privacy risk score from 1-10 where:
+   1-3 = Minimal data collection, strong user control, transparent practices
+   4-6 = Moderate collection, some third-party sharing, standard practices  
+   7-8 = Extensive collection, significant sharing, limited user control
+   9-10 = Invasive tracking, broad sharing, weak user rights
+
+Be specific about data types and practices. Focus on actionable information users need to make informed decisions.
+
+Return as clean JSON: {"summary": "• Point 1\n• Point 2\n...", "score": integer}
 
 Privacy Policy Text:
 ${policyText}`;
@@ -204,7 +223,7 @@ function extractAnalysisFromText(text) {
   try {
     // Try to find bullet points for summary
     const bulletPoints = text.match(/[•\-\*]\s*[^\n]+/g) || [];
-    const summary = bulletPoints.slice(0, 5).join('\n');
+    const summary = bulletPoints.slice(0, 7).join('\n');
     
     // Try to find a score number
     const scoreMatch = text.match(/(?:score|rating).*?(\d+)/i);
