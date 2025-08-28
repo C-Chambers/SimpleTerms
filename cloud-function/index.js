@@ -11,6 +11,9 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // Your Chrome Extension ID (replace with actual extension ID)
 const ALLOWED_EXTENSION_ID = 'doiijdjjldampcdmgkefblfkofkhaeln';
 
+// Simple rate limiting - track last request time
+let lastRequestTime = 0;
+
 /**
  * HTTP Cloud Function for analyzing privacy policies
  * @param {Object} req - Express request object
@@ -84,6 +87,9 @@ exports.analyzePrivacyPolicy = async (req, res) => {
 
     console.log(`Processing privacy policy analysis (${policyText.length} characters) from origin: ${origin}`);
 
+    // Add simple rate limiting protection
+    await rateLimitDelay();
+
     // Analyze privacy policy with Gemini AI
     const analysis = await analyzeWithGemini(policyText);
 
@@ -116,6 +122,24 @@ exports.analyzePrivacyPolicy = async (req, res) => {
     }
   }
 };
+
+/**
+ * Simple rate limiting to stay under 15 requests/minute
+ * @returns {Promise} Resolves after appropriate delay
+ */
+async function rateLimitDelay() {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  const minInterval = 4000; // 4 seconds = 15 requests/minute max
+  
+  if (timeSinceLastRequest < minInterval) {
+    const delay = minInterval - timeSinceLastRequest;
+    console.log(`Rate limiting: waiting ${delay}ms before API call`);
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+  
+  lastRequestTime = Date.now();
+}
 
 /**
  * Analyze privacy policy text using Google Gemini AI
