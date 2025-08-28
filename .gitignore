@@ -34,6 +34,10 @@ partnerships/
 .DS_Store
 Thumbs.db
 
+# Development and debugging
+BUGFIX_LOG.md
+DEBUG_NOTES.md
+
 # Logs
 *.log
 npm-debug.log*
