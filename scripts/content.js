@@ -222,13 +222,25 @@
             /freshdesk\.com/i,              // Freshdesk support (third-party)
             /intercom\.help/i,              // Intercom help (third-party)
             /confluence\.atlassian/i,       // Confluence docs (third-party)
-            /notion\.so/i,                  // Notion help pages (third-party)
             /gitbook\.io/i,                 // GitBook documentation (third-party)
             /helpscout\.net/i,              // HelpScout (third-party)
             /desk\.com/i,                   // Salesforce Desk (third-party)
         ];
 
-        // Check if URL matches third-party help patterns only
+        // Special case for Notion.so: Only exclude if it's clearly help content, not legal docs
+        if (/notion\.so/i.test(href)) {
+            // If the link text contains privacy/legal keywords, it's likely a privacy policy
+            const legalKeywords = /privacy|terms|legal|policy|gdpr|ccpa|cookie/i;
+            if (legalKeywords.test(text)) {
+                console.log('SimpleTerms: Notion.so link appears to be legal content, including:', href);
+                return false; // Include this link
+            } else {
+                console.log('SimpleTerms: Skipping Notion.so help content:', href);
+                return true; // Exclude help content
+            }
+        }
+
+        // Check if URL matches other third-party help patterns
         if (thirdPartyHelpPatterns.some(pattern => pattern.test(href))) {
             console.log('SimpleTerms: Skipping third-party help system:', href);
             return true;
