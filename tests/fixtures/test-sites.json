@@ -21,13 +21,7 @@
       "timeout": 10000,
       "category": "financial"
     },
-    {
-      "name": "Chase Bank",
-      "url": "https://chase.com",
-      "expectedPoints": 7,
-      "timeout": 10000,
-      "category": "financial"
-    },
+
     {
       "name": "Microsoft",
       "url": "https://microsoft.com",
@@ -46,14 +40,14 @@
       "name": "Spotify",
       "url": "https://spotify.com",
       "expectedPoints": 7,
-      "timeout": 10000,
+      "timeout": 40000,
       "category": "media"
     },
     {
       "name": "NY Times",
       "url": "https://nytimes.com",
       "expectedPoints": 7,
-      "timeout": 10000,
+      "timeout": 16000,
       "category": "media"
     }
   ],
@@ -92,6 +86,15 @@
       "fallbackStrategy": "headless_simple",
       "expectedPoints": 7,
       "timeout": 20000
+    },
+    {
+      "name": "Chase Bank",
+      "url": "https://chase.com",
+      "issues": ["certificate_verification_errors"],
+      "category": "financial",
+      "fallbackStrategy": "headless_simple",
+      "expectedPoints": 7,
+      "timeout": 15000
     }
   ],
   "knownFailures": [
