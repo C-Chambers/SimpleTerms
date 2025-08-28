@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "SimpleTerms",
-  "version": "1.0",
-  "description": "AI-powered privacy policy summarizer that provides instant summaries and risk scores",
+  "version": "1.0.0",
+  "description": "AI-powered privacy policy analyzer that provides instant summaries and risk scores for any website. Understand what data companies collect in plain language.",
   "action": {
     "default_popup": "popup/popup.html",
     "default_title": "SimpleTerms - Analyze Privacy Policy"
@@ -29,5 +29,7 @@
   },
   "host_permissions": [
     "<all_urls>"
-  ]
+  ],
+  "author": "SimpleTerms Team",
+  "minimum_chrome_version": "88"
 }
