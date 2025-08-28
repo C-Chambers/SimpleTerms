@@ -411,26 +411,29 @@
                 }
             });
 
-            // Sort by score and return the best match
+            // Sort by score and return the best matches
             candidates.sort((a, b) => b.score - a.score);
             
             if (candidates.length > 0) {
-                const bestMatch = candidates[0];
+                // Get top 3 candidates (or less if fewer are available)
+                const topCandidates = candidates.slice(0, 3);
                 
                 // Enhanced logging for debugging link selection
                 console.log('SimpleTerms: Found', candidates.length, 'privacy policy candidates');
                 console.log('SimpleTerms: Top 3 candidates:');
-                candidates.slice(0, 3).forEach((candidate, index) => {
+                topCandidates.forEach((candidate, index) => {
                     console.log(`  ${index + 1}. Score: ${candidate.score}, Text: "${candidate.text}", URL: ${candidate.url}, Location: ${candidate.location}, Context: ${candidate.context}`);
                 });
-                console.log('SimpleTerms: Selected best match:', bestMatch.url);
+                console.log('SimpleTerms: Sending top', topCandidates.length, 'candidates to popup');
                 
-                // Send the URL to the popup
+                // Send up to 3 URLs to the popup
                 chrome.runtime.sendMessage({
-                    type: 'POLICY_URL_FOUND',
-                    url: bestMatch.url,
-                    text: bestMatch.text,
-                    score: bestMatch.score
+                    type: 'POLICY_URLS_FOUND',
+                    policies: topCandidates.map(candidate => ({
+                        url: candidate.url,
+                        text: candidate.text,
+                        score: candidate.score
+                    }))
                 });
             } else {
                 console.log('SimpleTerms: No privacy policy link found');

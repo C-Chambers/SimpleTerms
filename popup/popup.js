@@ -2,6 +2,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     const analyzeButton = document.getElementById('analyzeButton');
     const resultsContainer = document.getElementById('resultsContainer');
+    const tabsContainer = document.getElementById('tabsContainer');
+    const tabButtons = document.getElementById('tabButtons');
+    
+    // Store multiple policy results
+    let policyResults = [];
+    let currentTabIndex = 0;
     
     // Configuration for Cloud Function endpoint
     const CLOUD_FUNCTION_URL = 'https://us-central1-simpleterms-backend.cloudfunctions.net/analyzePrivacyPolicy';
@@ -95,6 +101,8 @@ document.addEventListener('DOMContentLoaded', function() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.type === 'POLICY_URL_FOUND') {
             handlePolicyFound(message.url);
+        } else if (message.type === 'POLICY_URLS_FOUND') {
+            handleMultiplePoliciesFound(message.policies);
         } else if (message.type === 'CURRENT_PAGE_IS_POLICY') {
             handleCurrentPageAnalysis(message);
         } else if (message.type === 'NO_POLICY_FOUND') {
@@ -132,6 +140,171 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         resetButton();
+    }
+
+    async function handleMultiplePoliciesFound(policies) {
+        try {
+            console.log('Multiple privacy policies found:', policies.length);
+            
+            // Reset state
+            policyResults = [];
+            currentTabIndex = 0;
+            tabButtons.innerHTML = '';
+            resultsContainer.innerHTML = '';
+            
+            // Show tabs if more than one policy
+            if (policies.length > 1) {
+                tabsContainer.style.display = 'block';
+                
+                // Process each policy
+                for (let i = 0; i < policies.length; i++) {
+                    const policy = policies[i];
+                    
+                    // Create tab button
+                    const tabButton = document.createElement('button');
+                    tabButton.className = 'tab-button' + (i === 0 ? ' active' : '');
+                    tabButton.textContent = policy.text || `Policy ${i + 1}`;
+                    tabButton.title = policy.text || `Policy ${i + 1}`;
+                    tabButton.dataset.index = i;
+                    tabButton.addEventListener('click', () => switchTab(i));
+                    tabButtons.appendChild(tabButton);
+                    
+                    // Create result container for this policy
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'tab-content' + (i === 0 ? ' active' : '');
+                    resultDiv.id = `tab-content-${i}`;
+                    resultDiv.innerHTML = `
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <div style="margin-top: 10px; color: #6c757d; font-size: 14px;">
+                                Analyzing ${policy.text || 'privacy policy'}...
+                            </div>
+                        </div>
+                    `;
+                    resultsContainer.appendChild(resultDiv);
+                    
+                    // Analyze this policy
+                    analyzePolicyForTab(policy, i);
+                }
+            } else {
+                // Single policy - use existing flow
+                tabsContainer.style.display = 'none';
+                handlePolicyFound(policies[0].url);
+            }
+        } catch (error) {
+            console.error('Error handling multiple policies:', error);
+            showError('Failed to analyze privacy policies');
+            resetButton();
+        }
+    }
+
+    function switchTab(index) {
+        currentTabIndex = index;
+        
+        // Update tab buttons
+        const buttons = tabButtons.querySelectorAll('.tab-button');
+        buttons.forEach((btn, i) => {
+            btn.classList.toggle('active', i === index);
+        });
+        
+        // Update content visibility
+        const contents = resultsContainer.querySelectorAll('.tab-content');
+        contents.forEach((content, i) => {
+            content.classList.toggle('active', i === index);
+        });
+    }
+
+    async function analyzePolicyForTab(policy, tabIndex) {
+        try {
+            console.log(`Analyzing policy for tab ${tabIndex}:`, policy.url);
+            
+            // Fetch the raw HTML content
+            const html = await fetchPolicyContent(policy.url);
+            console.log(`Tab ${tabIndex} - Fetched HTML:`, html.length, 'characters');
+
+            // Extract text content
+            const policyText = extractTextFromHTML(html);
+            console.log(`Tab ${tabIndex} - Extracted text:`, policyText.length, 'characters');
+
+            if (!policyText || policyText.length < 100) {
+                // Try advanced extraction for dynamic sites
+                if (policy.url.includes('facebook.com') || policy.url.includes('instagram.com') || 
+                    policy.url.includes('twitter.com') || policy.url.includes('linkedin.com') ||
+                    policy.url.includes('tiktok.com') || policy.url.includes('snapchat.com') ||
+                    policy.url.includes('notion.so')) {
+                    
+                    console.log(`Tab ${tabIndex} - Detected dynamic content site, attempting advanced extraction...`);
+                    
+                    const dynamicContent = await tryAdvancedExtraction(policy.url);
+                    if (dynamicContent && dynamicContent.length > 100) {
+                        console.log(`Tab ${tabIndex} - Advanced extraction successful:`, dynamicContent.length, 'characters');
+                        const analysisResult = await analyzeWithCloudFunction(dynamicContent);
+                        displayResultsInTab(analysisResult.score, analysisResult.summary, policy.url, tabIndex);
+                        return;
+                    }
+                }
+                throw new Error('Privacy policy content appears to be too short or empty');
+            }
+
+            // Analyze with AI
+            const analysisResult = await analyzeWithCloudFunction(policyText);
+            
+            // Display results in the specific tab
+            displayResultsInTab(analysisResult.score, analysisResult.summary, policy.url, tabIndex);
+            
+        } catch (error) {
+            console.error(`Error analyzing policy for tab ${tabIndex}:`, error);
+            displayErrorInTab(error.message || 'Failed to analyze this privacy policy', tabIndex);
+        }
+    }
+
+    function displayResultsInTab(score, summary, policyUrl, tabIndex) {
+        const tabContent = document.getElementById(`tab-content-${tabIndex}`);
+        if (!tabContent) return;
+        
+        let scoreClass = 'score-low';
+        let scoreDescription = 'Low Risk';
+        
+        if (score >= 4 && score <= 6) {
+            scoreClass = 'score-medium';
+            scoreDescription = 'Medium Risk';
+        } else if (score >= 7) {
+            scoreClass = 'score-high';
+            scoreDescription = 'High Risk';
+        }
+
+        const summaryHtml = summary.map(point => `<li>${escapeHtml(point)}</li>`).join('');
+
+        tabContent.innerHTML = `
+            <div class="score-container">
+                <div class="score-label">Privacy Risk Score</div>
+                <div class="score-value ${scoreClass}">${score}/10</div>
+                <div class="score-description ${scoreClass}">${scoreDescription}</div>
+            </div>
+            <div class="summary-container">
+                <div class="summary-title">Key Points:</div>
+                <ul class="summary-list">
+                    ${summaryHtml}
+                </ul>
+            </div>
+            <div style="margin-top: 10px; font-size: 12px; color: #6c757d; text-align: center;">
+                Analyzed: <a href="${escapeHtml(policyUrl)}" target="_blank" rel="noopener noreferrer" style="color: #667eea;" title="${escapeHtml(policyUrl)}">${escapeHtml(formatUrlForDisplay(policyUrl))}</a>
+            </div>
+        `;
+        
+        // Store result
+        policyResults[tabIndex] = { score, summary, policyUrl };
+    }
+
+    function displayErrorInTab(errorMessage, tabIndex) {
+        const tabContent = document.getElementById(`tab-content-${tabIndex}`);
+        if (!tabContent) return;
+        
+        tabContent.innerHTML = `
+            <div class="error-message">
+                <strong>Error:</strong> ${errorMessage}
+            </div>
+        `;
     }
 
     async function handleCurrentPageAnalysis(message) {
@@ -174,6 +347,9 @@ document.addEventListener('DOMContentLoaded', function() {
     async function handlePolicyFound(policyUrl) {
         try {
             console.log('Analyzing privacy policy:', policyUrl);
+            
+            // Hide tabs for single policy
+            tabsContainer.style.display = 'none';
             
             // Show loading spinner while processing
             showLoading('Fetching privacy policy...');
@@ -495,5 +671,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function resetButton() {
         analyzeButton.disabled = false;
         analyzeButton.innerHTML = '<span class="btn-icon">🔍</span>Analyze Policy';
+        // Reset tab state
+        policyResults = [];
+        currentTabIndex = 0;
+        tabsContainer.style.display = 'none';
+        tabButtons.innerHTML = '';
     }
 });
