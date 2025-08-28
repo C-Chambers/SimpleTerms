@@ -69,8 +69,20 @@ document.addEventListener('DOMContentLoaded', function() {
             // Get the active tab
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             
-            // Send message to existing content script to trigger analysis
-            chrome.tabs.sendMessage(tab.id, { type: 'TRIGGER_ANALYSIS' });
+            // Inject content script but with a flag to prevent auto-execution
+            await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: () => {
+                    // Set a flag to indicate this is a manual trigger
+                    window.simpleTermsManualTrigger = true;
+                }
+            });
+
+            // Now inject the content script
+            await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                files: ['scripts/content.js']
+            });
 
         } catch (error) {
             console.error('Error executing content script:', error);
