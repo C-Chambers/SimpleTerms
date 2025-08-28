@@ -1,0 +1,12 @@
+{
+  "timestamp": "2025-08-28T17:04:04.864Z",
+  "testRun": "comprehensive-test-2025-08-28T16-52-06-821Z.log",
+  "results": {
+    "total": 50,
+    "passed": 36,
+    "failed": 14,
+    "passRate": 72
+  },
+  "targetMet": false,
+  "categories": {}
+}
