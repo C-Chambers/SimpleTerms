@@ -270,34 +270,29 @@ document.addEventListener('DOMContentLoaded', function() {
     async function tryAdvancedExtraction(policyUrl) {
         return new Promise((resolve) => {
             // Create a new window with the tab (more invisible than tab in current window)
-            chrome.windows.create({ 
-                url: policyUrl + (policyUrl.includes('?') ? '&' : '?') + 'simpleTermsExtraction=true', 
-                type: 'popup',
-                state: 'minimized',
-                focused: false,
-                width: 1,
-                height: 1,
-                left: -1000,
-                top: -1000
-            }, async (window) => {
+            // Try creating a regular tab first, then minimize the window
+            chrome.tabs.create({ 
+                url: policyUrl + (policyUrl.includes('?') ? '&' : '?') + 'simpleTermsExtraction=true',
+                active: false
+            }, async (tab) => {
+                if (!tab || !tab.id) {
+                    console.error('Failed to create extraction tab');
+                    resolve(null);
+                    return;
+                }
+                
+                // Get the window containing the tab and minimize it
+                const window = await chrome.windows.get(tab.windowId);
+                if (window) {
+                    chrome.windows.update(tab.windowId, { 
+                        state: 'minimized',
+                        focused: false 
+                    }).catch(() => {
+                        // If minimizing fails, that's okay - continue with extraction
+                        console.log('Could not minimize window, continuing with extraction');
+                    });
+                }
                 try {
-                    // Check if window creation was successful
-                    if (!window || !window.id) {
-                        console.error('Failed to create extraction window');
-                        resolve(null);
-                        return;
-                    }
-                    
-                    // Get the tab from the newly created window
-                    const tabs = await chrome.tabs.query({ windowId: window.id });
-                    if (!tabs || tabs.length === 0) {
-                        console.error('No tabs found in extraction window');
-                        chrome.windows.remove(window.id).catch(() => {});
-                        resolve(null);
-                        return;
-                    }
-                    
-                    const tab = tabs[0];
                     
                     // Wait for the page to load
                     setTimeout(async () => {
@@ -336,16 +331,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                             });
                             
-                            // Close the entire window
-                            chrome.windows.remove(window.id);
+                            // Close the tab
+                            chrome.tabs.remove(tab.id);
                             
                             // Return the extracted content
                             resolve(results[0]?.result || null);
                         } catch (error) {
                             console.error('Error in advanced extraction:', error);
-                            if (window && window.id) {
-                                chrome.windows.remove(window.id).catch(() => {});
-                            }
+                            chrome.tabs.remove(tab.id).catch(() => {});
                             resolve(null);
                         }
                     }, 4000); // Wait 4 seconds for dynamic content to load and avoid double analysis
