@@ -273,26 +273,68 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     /**
-     * Try advanced content extraction for dynamic sites by opening in new tab
+     * Try advanced content extraction for dynamic sites by opening in new tab with retry logic
      * @param {string} policyUrl - URL of the privacy policy
      * @returns {Promise<string>} Extracted content or null if failed
      */
     async function tryAdvancedExtraction(policyUrl) {
-        return new Promise((resolve) => {
-            console.log('Attempting tab-based extraction for:', policyUrl);
+        const maxRetries = 3;
+        const initialWaitTime = 2000; // 2 seconds for fast connections
+        const retryDelay = 2000; // 2 seconds between retries
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            console.log(`Advanced extraction attempt ${attempt}/${maxRetries} for:`, policyUrl);
             
-            // Simple approach: Create background tab, extract content, close tab
+            try {
+                const content = await attemptExtraction(policyUrl, initialWaitTime);
+                
+                if (content && content.length > 100) {
+                    console.log(`Extraction successful on attempt ${attempt}, content length:`, content.length);
+                    return content;
+                }
+                
+                console.log(`Attempt ${attempt} failed: content too short (${content?.length || 0} chars)`);
+                
+                // If not the last attempt, wait before retrying
+                if (attempt < maxRetries) {
+                    console.log(`Waiting ${retryDelay}ms before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, retryDelay));
+                }
+                
+            } catch (error) {
+                console.error(`Extraction attempt ${attempt} error:`, error);
+                
+                // If not the last attempt, wait before retrying
+                if (attempt < maxRetries) {
+                    console.log(`Waiting ${retryDelay}ms before retry...`);
+                    await new Promise(resolve => setTimeout(resolve, retryDelay));
+                }
+            }
+        }
+        
+        console.log('All extraction attempts failed');
+        return null;
+    }
+
+    /**
+     * Single extraction attempt
+     * @param {string} policyUrl - URL of the privacy policy
+     * @param {number} waitTime - Time to wait for content to load
+     * @returns {Promise<string>} Extracted content or null if failed
+     */
+    async function attemptExtraction(policyUrl, waitTime) {
+        return new Promise((resolve, reject) => {
+            // Create background tab for extraction
             chrome.tabs.create({ 
                 url: policyUrl + (policyUrl.includes('?') ? '&' : '?') + 'simpleTermsExtraction=true',
                 active: false  // Opens in background
             }, async (tab) => {
                 if (!tab || !tab.id) {
-                    console.error('Failed to create extraction tab');
-                    resolve(null);
+                    reject(new Error('Failed to create extraction tab'));
                     return;
                 }
                 
-                console.log('Created extraction tab:', tab.id);
+                console.log(`Created extraction tab: ${tab.id}, waiting ${waitTime}ms...`);
                 
                 // Wait for page to load, then extract content
                 setTimeout(async () => {
@@ -333,8 +375,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         });
                         
-                        console.log('Content extracted, closing tab');
-                        
                         // Close the tab
                         chrome.tabs.remove(tab.id);
                         
@@ -344,11 +384,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         resolve(extractedText);
                         
                     } catch (error) {
-                        console.error('Error in advanced extraction:', error);
+                        console.error('Error in content extraction:', error);
                         chrome.tabs.remove(tab.id).catch(() => {});
-                        resolve(null);
+                        reject(error);
                     }
-                }, 4000); // Wait 4 seconds for dynamic content to load
+                }, waitTime);
             });
         });
     }
