@@ -62,3 +62,8 @@ BUGFIX_LOG.md
 ICON_ART_OUTLINE.md
 TESTING_STRATEGY.md
 package-lock.json
+
+# Production build files
+manifest.prod.json
+*.pem
+*.crx

@@ -641,6 +641,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 Analyzed: <a href="${escapeHtml(policyUrl)}" target="_blank" rel="noopener noreferrer" style="color: #667eea;" title="${escapeHtml(policyUrl)}">${escapeHtml(formatUrlForDisplay(policyUrl))}</a>
             </div>
         `;
+        
+        // Reset button after successful analysis
+        resetButton();
     }
 
     function displayCurrentPageResults(score, summary, policyUrl, confidence) {
@@ -686,6 +689,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 Current Page: <a href="${escapeHtml(policyUrl)}" target="_blank" rel="noopener noreferrer" style="color: #667eea;" title="${escapeHtml(policyUrl)}">${escapeHtml(formatUrlForDisplay(policyUrl))}</a>
             </div>
         `;
+        
+        // Reset button after successful analysis
+        resetButton();
     }
 
     function resetButton() {

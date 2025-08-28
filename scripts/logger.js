@@ -60,6 +60,11 @@
         window.SimpleTermsLogger = Logger;
     }
     
+    // Export for service workers (background scripts)
+    if (typeof self !== 'undefined') {
+        self.SimpleTermsLogger = Logger;
+    }
+    
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = Logger;
     }
