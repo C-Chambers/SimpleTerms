@@ -216,46 +216,40 @@
      * @returns {boolean} True if this is non-policy content to skip
      */
     function isNonPolicyContent(href, text) {
-        // Help center and support page patterns
-        const nonPolicyPatterns = [
-            /zendesk\.com\/hc\//i,           // Zendesk help center
-            /support\./i,                   // Support subdomains
-            /help\./i,                      // Help subdomains
-            /\/help\//i,                    // Help center paths
-            /\/support\//i,                 // Support paths
-            /\/hc\//i,                      // Help center paths
-            /\/kb\//i,                      // Knowledge base paths
-            /\/faq/i,                       // FAQ pages
-            /\/articles\//i,                // Article pages
-            /\/guides\//i,                  // Guide pages
-            /freshdesk\.com/i,              // Freshdesk support
-            /intercom\.help/i,              // Intercom help
-            /confluence\./i,                // Confluence docs
-            /notion\./i,                    // Notion help pages
-            /gitbook\./i,                   // GitBook documentation
+        // Only exclude THIRD-PARTY help systems, not company's own help sections
+        const thirdPartyHelpPatterns = [
+            /zendesk\.com\/hc\//i,           // Zendesk help center (third-party)
+            /freshdesk\.com/i,              // Freshdesk support (third-party)
+            /intercom\.help/i,              // Intercom help (third-party)
+            /confluence\.atlassian/i,       // Confluence docs (third-party)
+            /notion\.so/i,                  // Notion help pages (third-party)
+            /gitbook\.io/i,                 // GitBook documentation (third-party)
+            /helpscout\.net/i,              // HelpScout (third-party)
+            /desk\.com/i,                   // Salesforce Desk (third-party)
         ];
 
-        // Check if URL matches non-policy patterns
-        if (nonPolicyPatterns.some(pattern => pattern.test(href))) {
-            console.log('SimpleTerms: Skipping non-policy content:', href);
+        // Check if URL matches third-party help patterns only
+        if (thirdPartyHelpPatterns.some(pattern => pattern.test(href))) {
+            console.log('SimpleTerms: Skipping third-party help system:', href);
             return true;
         }
 
-        // Check for help/support-related text patterns
-        const nonPolicyTextPatterns = [
+        // Only exclude text that's clearly about HOW TO understand privacy, not the policy itself
+        const helpAboutPrivacyPatterns = [
             /how to.*privacy/i,
-            /privacy.*help/i,
-            /privacy.*support/i,
-            /privacy.*guide/i,
-            /privacy.*article/i,
-            /privacy.*faq/i,
-            /about.*privacy/i,
             /understanding.*privacy/i,
+            /privacy.*explained/i,
+            /privacy.*guide/i,
             /privacy.*questions/i,
+            /privacy.*faq/i,
         ];
 
-        if (nonPolicyTextPatterns.some(pattern => pattern.test(text))) {
-            console.log('SimpleTerms: Skipping help content based on text:', text);
+        // Additional check: if it's clearly help content AND not from the main domain
+        const isHelpContent = helpAboutPrivacyPatterns.some(pattern => pattern.test(text));
+        const isThirdPartyDomain = !href.includes(window.location.hostname);
+        
+        if (isHelpContent && isThirdPartyDomain) {
+            console.log('SimpleTerms: Skipping third-party help content:', text);
             return true;
         }
 
