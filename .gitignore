@@ -1,62 +1,47 @@
-# SimpleTerms - Private Files
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Confidential roadmap and business strategy
-ROADMAP.md
-MONETIZATION_STRATEGY.md
-BUSINESS_PLAN.md
-COMPETITIVE_ANALYSIS.md
-MARKET_RESEARCH.md
-
-# Development secrets
+# Environment variables
 .env
 .env.local
-.env.production
-secrets.json
+.env.yaml
+*.env
 
-# Private notes and ideas
-NOTES.md
-IDEAS.md
-TODO_PRIVATE.md
+# Production builds
+*.zip
+dist/
+build/
 
-# Art and design documents
-ICON_ART_OUTLINE.md
+# Test results
+coverage/
+*.log
+test-results/
 
-# User research and analytics
-user_data/
-analytics/
-research/
-
-# Business documents
-business/
-legal/
-partnerships/
-
-# IDE and OS files
+# IDE files
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 .DS_Store
 Thumbs.db
 
-# Development and debugging
-BUGFIX_LOG.md
-DEBUG_NOTES.md
-TESTING_STRATEGY.md
+# Temporary files
+tmp/
+temp/
+*.tmp
 
-# Logs
-*.log
-npm-debug.log*
+# Private keys and certificates
+*.pem
+*.key
+*.crt
 
-# Dependencies
-node_modules/
-package-lock.json
+# Chrome extension private key
+*.crx
+*.pem
 
-# Test outputs
-coverage/
-*.lcov
-test-results/
-
-# Build outputs
-dist/
-build/
-*.zip
-*.tar.gz
+# Local test data
+local-test-data/

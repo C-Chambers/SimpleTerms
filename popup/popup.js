@@ -67,6 +67,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add event listener to the analyze button
     analyzeButton.addEventListener('click', async function() {
         try {
+            // Check if offline
+            if (!navigator.onLine) {
+                showError('You are offline. Please connect to the internet and try again.');
+                return;
+            }
+            
             // Disable button and show loading state
             analyzeButton.disabled = true;
             analyzeButton.textContent = 'Analyzing...';
@@ -91,8 +97,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
         } catch (error) {
-            console.error('Error executing content script:', error);
-            showError('Failed to analyze the page. Please try again.');
+            // Check if offline
+            if (!navigator.onLine) {
+                showError('No internet connection. Please check your network and try again.');
+            } else {
+                showError('Failed to analyze the page. Please try again.');
+            }
             resetButton();
         }
     });

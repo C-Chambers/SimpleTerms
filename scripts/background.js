@@ -1,8 +1,12 @@
 // SimpleTerms Background Script (Service Worker)
 // Handles background tasks and extension lifecycle events
 
+// Import logger utility
+importScripts('logger.js');
+const logger = new SimpleTermsLogger('Background');
+
 chrome.runtime.onInstalled.addListener((details) => {
-    console.log('SimpleTerms extension installed/updated:', details.reason);
+    logger.info('Extension installed/updated:', details.reason);
     
     if (details.reason === 'install') {
         // Initialize storage with default values
@@ -12,20 +16,20 @@ chrome.runtime.onInstalled.addListener((details) => {
             version: chrome.runtime.getManifest().version
         });
         
-        console.log('SimpleTerms: Extension installed successfully');
+        logger.info('Extension installed successfully');
     } else if (details.reason === 'update') {
-        console.log('SimpleTerms: Extension updated to version', chrome.runtime.getManifest().version);
+        logger.info('Extension updated to version', chrome.runtime.getManifest().version);
     }
 });
 
 // Handle extension startup
 chrome.runtime.onStartup.addListener(() => {
-    console.log('SimpleTerms: Extension started');
+    logger.debug('Extension started');
 });
 
 // Handle messages from content scripts and popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('SimpleTerms: Background received message:', message.type);
+    logger.debug('Background received message:', message.type);
     
     switch (message.type) {
         case 'GET_STORAGE_DATA':
@@ -59,7 +63,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     sendResponse({ success: true, html: html });
                 })
                 .catch(error => {
-                    console.error('SimpleTerms: Error fetching policy content:', error);
+                    logger.error('Error fetching policy content:', error);
                     sendResponse({ success: false, error: error.message });
                 });
             return true; // Keep the message channel open for async response
@@ -71,26 +75,67 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     sendResponse({ success: true, result: result });
                 })
                 .catch(error => {
-                    console.error('SimpleTerms: Error analyzing with Cloud Function:', error);
+                    logger.error('Error analyzing with Cloud Function:', error);
                     sendResponse({ success: false, error: error.message });
                 });
             return true; // Keep the message channel open for async response
             
         default:
-            console.log('SimpleTerms: Unknown message type:', message.type);
+            logger.warn('Unknown message type:', message.type);
     }
 });
 
 // Handle extension icon click (optional - popup handles most interactions)
 chrome.action.onClicked.addListener((tab) => {
-    console.log('SimpleTerms: Extension icon clicked on tab:', tab.url);
+    logger.debug('Extension icon clicked on tab:', tab.url);
     // The popup will handle the interaction
 });
 
 // Cleanup function for when extension is disabled/uninstalled
 chrome.runtime.onSuspend.addListener(() => {
-    console.log('SimpleTerms: Extension is being suspended');
+    logger.debug('Extension is being suspended');
 });
+
+/**
+ * Fetch with retry logic
+ * @param {string} url - URL to fetch
+ * @param {Object} options - Fetch options
+ * @param {number} maxRetries - Maximum number of retries
+ * @returns {Promise<Response>} Fetch response
+ */
+async function fetchWithRetry(url, options = {}, maxRetries = 3) {
+    let lastError;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            // Add exponential backoff for retries
+            if (attempt > 0) {
+                const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+                logger.debug(`Retry attempt ${attempt} after ${delay}ms`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+            
+            const response = await fetch(url, options);
+            
+            // If successful or client error (4xx), don't retry
+            if (response.ok || (response.status >= 400 && response.status < 500)) {
+                return response;
+            }
+            
+            // Server error (5xx), retry
+            lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+            
+        } catch (error) {
+            lastError = error;
+            // Network errors, retry
+            if (attempt === maxRetries) {
+                break;
+            }
+        }
+    }
+    
+    throw lastError;
+}
 
 /**
  * Fetch privacy policy content from URL (runs in background context, bypasses CSP)
@@ -99,9 +144,14 @@ chrome.runtime.onSuspend.addListener(() => {
  */
 async function fetchPolicyContent(url) {
     try {
-        console.log('SimpleTerms: Fetching policy content from:', url);
+        // Check if offline
+        if (!navigator.onLine) {
+            throw new Error('No internet connection. Please check your network and try again.');
+        }
         
-        const response = await fetch(url, {
+        logger.debug('Fetching policy content from:', url);
+        
+        const response = await fetchWithRetry(url, {
             method: 'GET',
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
@@ -113,12 +163,12 @@ async function fetchPolicyContent(url) {
         }
         
         const html = await response.text();
-        console.log('SimpleTerms: Successfully fetched', html.length, 'characters');
+        logger.debug('Successfully fetched', html.length, 'characters');
         
         return html;
         
     } catch (error) {
-        console.error('SimpleTerms: Fetch error:', error);
+        logger.error('Fetch error:', error);
         throw new Error(`Failed to fetch policy content: ${error.message}`);
     }
 }
@@ -130,29 +180,34 @@ async function fetchPolicyContent(url) {
  */
 async function analyzeWithCloudFunction(policyText) {
     try {
-        console.log('SimpleTerms: Sending request to Cloud Function...');
+        // Check if offline
+        if (!navigator.onLine) {
+            throw new Error('No internet connection. SimpleTerms requires an internet connection to analyze privacy policies.');
+        }
         
-        const response = await fetch('https://us-central1-simpleterms-backend.cloudfunctions.net/analyzePrivacyPolicy', {
+        logger.debug('Sending request to Cloud Function...');
+        
+        const response = await fetchWithRetry('https://us-central1-simpleterms-backend.cloudfunctions.net/analyzePrivacyPolicy', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Origin': 'chrome-extension://doiijdjjldampcdmgkefblfkofkhaeln'  // Extension origin for CORS
+                'Origin': `chrome-extension://${chrome.runtime.id}`  // Dynamic extension origin for CORS
             },
             body: JSON.stringify({
                 policyText: policyText
             })
-        });
+        }, 2); // Max 2 retries for Cloud Function
 
         // Check if request was successful
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('SimpleTerms: Cloud Function error response:', errorText);
+            logger.error('Cloud Function error response:', errorText);
             throw new Error(`Cloud Function request failed: ${response.status} ${response.statusText}`);
         }
 
         // Parse JSON response
         const result = await response.json();
-        console.log('SimpleTerms: Cloud Function response received');
+        logger.debug('Cloud Function response received');
 
         // Validate response structure
         if (!result.success || !result.data) {
@@ -187,11 +242,15 @@ async function analyzeWithCloudFunction(policyText) {
         };
 
     } catch (error) {
-        console.error('SimpleTerms: Error calling Cloud Function:', error);
+        logger.error('Error calling Cloud Function:', error);
         
         // Re-throw with more specific error message
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            throw new Error('Cloud Function network error: Unable to connect to analysis service');
+            // Check if offline
+            if (!navigator.onLine) {
+                throw new Error('You are offline. Please connect to the internet and try again.');
+            }
+            throw new Error('Network error: Unable to connect to analysis service. Please check your connection.');
         } else if (error.message.includes('CORS')) {
             throw new Error('Cloud Function CORS error: Extension not authorized');
         } else {
