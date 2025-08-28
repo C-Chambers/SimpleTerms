@@ -4,8 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultsContainer = document.getElementById('resultsContainer');
     
     // Configuration for Cloud Function endpoint
-    // Replace with your actual Google Cloud Function URL
-    const CLOUD_FUNCTION_URL = 'https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/analyzePrivacyPolicy';
+    const CLOUD_FUNCTION_URL = 'https://us-central1-simpleterms-backend.cloudfunctions.net/analyzePrivacyPolicy';
 
     // Security: HTML escape function to prevent XSS
     function escapeHtml(text) {
