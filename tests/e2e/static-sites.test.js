@@ -1,9 +1,9 @@
-const { testSite } = require('../utils/puppeteer-helpers');
+const { testSiteDirectly } = require('../utils/direct-test-helpers');
 const testSites = require('../fixtures/test-sites.json');
 
 describe('SimpleTerms Extension - Static Sites Regression Tests', () => {
   
-  // Set longer timeout for these tests since they involve real browser automation
+  // Set longer timeout for these tests since they involve real browser navigation and AI analysis
   const testTimeout = 60000; // 60 seconds per test
   
   beforeAll(() => {
@@ -24,7 +24,7 @@ describe('SimpleTerms Extension - Static Sites Regression Tests', () => {
       console.log(`⏱️  Timeout: ${site.timeout}ms`);
       
       const startTime = Date.now();
-      const result = await testSite(site.url, site.timeout);
+      const result = await testSiteDirectly(site.url, site.timeout);
       const duration = Date.now() - startTime;
       
       console.log(`⏰ Test completed in ${duration}ms`);
@@ -101,8 +101,8 @@ describe('Test Suite Validation', () => {
   });
 
   test('Test utilities are available', () => {
-    expect(testSite).toBeDefined();
-    expect(typeof testSite).toBe('function');
+    expect(testSiteDirectly).toBeDefined();
+    expect(typeof testSiteDirectly).toBe('function');
   });
 
 });

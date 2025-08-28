@@ -223,7 +223,7 @@ async function testSiteDirectly(url, timeout = 15000) {
         success: analysisResult.success,
         summaryPoints: analysisResult.summaryPoints || [],
         riskScore: analysisResult.riskScore,
-        errorMessage: analysisResult.error,
+        errorMessage: analysisResult.errorMessage,
         policyUrl: policyMessage.url,
         linkScore: policyMessage.score
       };
@@ -244,7 +244,7 @@ async function testSiteDirectly(url, timeout = 15000) {
           success: analysisResult.success,
           summaryPoints: analysisResult.summaryPoints || [],
           riskScore: analysisResult.riskScore,
-          errorMessage: analysisResult.error,
+          errorMessage: analysisResult.errorMessage,
           currentPage: true,
           confidence: currentPageMessage.confidence
         };
@@ -400,14 +400,15 @@ async function testCloudFunction(policyUrl, policyContent = null) {
       success: true,
       summaryPoints: summaryArray,
       riskScore: result.data.score,
-      rawSummary: result.data.summary
+      rawSummary: result.data.summary,
+      errorMessage: null
     };
     
   } catch (error) {
     console.error('Cloud Function test error:', error.message);
     return {
       success: false,
-      error: error.message
+      errorMessage: error.message
     };
   }
 }
