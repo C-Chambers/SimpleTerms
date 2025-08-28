@@ -593,14 +593,18 @@
         }
     }
 
-    // Listen for messages from popup to trigger analysis
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        if (message.type === 'TRIGGER_ANALYSIS') {
-            console.log('SimpleTerms: Received trigger from popup, running analysis');
-            analyzePageForPrivacyPolicy();
-        }
-    });
-
-    // Execute the analysis when content script first loads
-    analyzePageForPrivacyPolicy();
+    // Check if this is a manual trigger from popup or automatic load
+    if (window.simpleTermsManualTrigger) {
+        // This is a manual trigger from popup - run analysis
+        console.log('SimpleTerms: Manual trigger detected, running analysis');
+        analyzePageForPrivacyPolicy();
+    } else if (!window.simpleTermsExecuted) {
+        // This is the first automatic load - run analysis and mark as executed
+        console.log('SimpleTerms: First automatic load, running analysis');
+        window.simpleTermsExecuted = true;
+        analyzePageForPrivacyPolicy();
+    } else {
+        // This script has already run, skip to prevent duplicates
+        console.log('SimpleTerms: Already executed, skipping to prevent duplicates');
+    }
 })();
