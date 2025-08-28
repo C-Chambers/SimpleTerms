@@ -7,6 +7,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Replace with your actual Google Cloud Function URL
     const CLOUD_FUNCTION_URL = 'https://YOUR_REGION-YOUR_PROJECT.cloudfunctions.net/analyzePrivacyPolicy';
 
+    // Security: HTML escape function to prevent XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     // Add event listener to the analyze button
     analyzeButton.addEventListener('click', async function() {
         try {
@@ -274,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
             scoreDescription = 'High Risk';
         }
 
-        const summaryHtml = summary.map(point => `<li>${point}</li>`).join('');
+        const summaryHtml = summary.map(point => `<li>${escapeHtml(point)}</li>`).join('');
 
         resultsContainer.innerHTML = `
             <div class="score-container">
@@ -289,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </ul>
             </div>
             <div style="margin-top: 10px; font-size: 12px; color: #6c757d; text-align: center;">
-                Analyzed: <a href="${policyUrl}" target="_blank" style="color: #667eea;">Privacy Policy</a>
+                Analyzed: <a href="${escapeHtml(policyUrl)}" target="_blank" style="color: #667eea;">Privacy Policy</a>
             </div>
         `;
     }
@@ -306,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
             scoreDescription = 'High Risk';
         }
 
-        const summaryHtml = summary.map(point => `<li>${point}</li>`).join('');
+        const summaryHtml = summary.map(point => `<li>${escapeHtml(point)}</li>`).join('');
 
         // Add a visual indicator that this was analyzed from the current page
         const currentPageBadge = `
@@ -334,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </ul>
             </div>
             <div style="margin-top: 10px; font-size: 12px; color: #6c757d; text-align: center;">
-                Current Page: <a href="${policyUrl}" target="_blank" style="color: #667eea;">${new URL(policyUrl).hostname}</a>
+                Current Page: <a href="${escapeHtml(policyUrl)}" target="_blank" style="color: #667eea;">${escapeHtml(new URL(policyUrl).hostname)}</a>
             </div>
         `;
     }

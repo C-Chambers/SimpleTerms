@@ -21,7 +21,7 @@ exports.analyzePrivacyPolicy = async (req, res) => {
     // Configure CORS headers for security
     const origin = req.get('Origin');
     const allowedOrigins = [
-      ALLOWED_EXTENSION_ID
+      `chrome-extension://${ALLOWED_EXTENSION_ID}`
     ].filter(Boolean);
 
     // Check if request is from allowed extension
@@ -44,6 +44,15 @@ exports.analyzePrivacyPolicy = async (req, res) => {
       return res.status(405).json({
         error: 'Method not allowed',
         message: 'Only POST requests are supported'
+      });
+    }
+
+    // Check request size to prevent DoS attacks
+    const contentLength = req.get('content-length');
+    if (contentLength && parseInt(contentLength) > 500000) { // 500KB limit
+      return res.status(413).json({
+        error: 'Request too large',
+        message: 'Request size exceeds maximum allowed limit'
       });
     }
 
@@ -73,7 +82,7 @@ exports.analyzePrivacyPolicy = async (req, res) => {
       });
     }
 
-    console.log(`Processing privacy policy analysis (${policyText.length} characters)`);
+    console.log(`Processing privacy policy analysis (${policyText.length} characters) from origin: ${origin}`);
 
     // Analyze privacy policy with Gemini AI
     const analysis = await analyzeWithGemini(policyText);
