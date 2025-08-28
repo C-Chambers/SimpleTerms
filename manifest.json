@@ -31,6 +31,6 @@
     "<all_urls>"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://*.cloudfunctions.net; default-src 'self'"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://us-central1-simpleterms-backend.cloudfunctions.net; default-src 'self'"
   }
 }
