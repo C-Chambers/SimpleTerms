@@ -48,17 +48,17 @@ Backend: A serverless function (e.g., Google Cloud Functions, AWS Lambda) is cru
 AI Model: A powerful large language model like Google's Gemini or OpenAI's GPT series, accessed via API call from the serverless function.
 
 Project Manager Guide for AI Coding Assistant
-Project Title: "PrivacyGuard" - AI Privacy Policy Summarizer Chrome Extension
+Project Title: "SimpleTerms" - AI Privacy Policy Summarizer Chrome Extension
 
-Objective: To build, from scratch, a functional MVP of the PrivacyGuard browser extension. This guide is structured as a series of sequential prompts to be executed by an AI coding assistant.
+Objective: To build, from scratch, a functional MVP of the SimpleTerms browser extension. This guide is structured as a series of sequential prompts to be executed by an AI coding assistant.
 
 Phase 1: Project Scaffolding & Manifest Setup
 Prompt 1.1: "Generate the complete file structure for a new Google Chrome extension. Include a manifest.json file, a popup/ directory containing popup.html, popup.js, and popup.css, a scripts/ directory containing content.js and background.js, and an icons/ directory with placeholders for 16x16, 48x48, and 128x128 pixel icons."
 
-Prompt 1.2: "Populate the manifest.json file for a Manifest V3 extension. Set the name to 'PrivacyGuard' and the version to '1.0'. Define the action to use popup/popup.html as the default popup. Grant the following permissions: activeTab and scripting. Define content_scripts to run scripts/content.js on all URLs (<all_urls>)."
+Prompt 1.2: "Populate the manifest.json file for a Manifest V3 extension. Set the name to 'SimpleTerms' and the version to '1.0'. Define the action to use popup/popup.html as the default popup. Grant the following permissions: activeTab and scripting. Define content_scripts to run scripts/content.js on all URLs (<all_urls>)."
 
 Phase 2: User Interface (Popup)
-Prompt 2.1: "Create the HTML for popup/popup.html. It should include a main container div. Inside, add a <h1> with the text 'PrivacyGuard', a <button> with the ID analyzeButton and text 'Analyze Policy', and a div with the ID resultsContainer which will initially be empty. Link to the popup.css and popup.js files."
+Prompt 2.1: "Create the HTML for popup/popup.html. It should include a main container div. Inside, add a <h1> with the text 'SimpleTerms', a <button> with the ID analyzeButton and text 'Analyze Policy', and a div with the ID resultsContainer which will initially be empty. Link to the popup.css and popup.js files."
 
 Prompt 2.2: "Create the CSS for popup/popup.css. Style the popup to have a fixed width of 350px. Center the content, style the analyzeButton to be prominent and visually appealing, and add a simple loading spinner animation class that can be applied to the resultsContainer."
 
@@ -101,5 +101,6 @@ Phase 6: Monetization with ExtensionPay
 Prompt 6.1: "Integrate the ExtensionPay.js library into the project. In popup/popup.js, initialize ExtensionPay with the placeholder ID 'YOUR-EXTENSION-ID'.
 
 Prompt 6.2: "Modify the analyzeButton's event listener in popup/popup.js. Before executing the analysis, it should first call extpay.getUser(). Then, check if user.paid is true. If it is, proceed with the analysis. If user.paid is false, open the payment page by calling extpay.openPaymentPage()."
+
 
 Prompt 6.3 (Freemium Logic): "Refine the logic from Prompt 6.2 to implement a freemium model. Use chrome.storage.local to store a summaryCount. Before the analysis, check the user's paid status. If not paid, check the summaryCount. If the count is less than 5, proceed with the analysis and increment the count. If the count is 5 or more, call extpay.openPaymentPage() instead of performing the analysis."
