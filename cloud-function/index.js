@@ -149,7 +149,7 @@ async function rateLimitDelay() {
 async function analyzeWithGemini(policyText) {
   try {
     // Get the Gemini model
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     // Construct the analysis prompt
     const prompt = `You are a helpful privacy assistant. Summarize this privacy policy in exactly 7 simple, concise bullet points that are easy for regular users to understand. Focus on:
