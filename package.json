@@ -1,0 +1,30 @@
+{
+  "name": "simpleterms",
+  "version": "1.0.0",
+  "description": "SimpleTerms - AI Privacy Policy Summarizer\r A browser extension that uses AI to instantly summarize complex privacy policies and assign a \"Privacy Risk Score,\" empowering you to understand how your data is being used.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:unit": "jest tests/unit",
+    "test:e2e": "jest tests/e2e",
+    "test:static": "jest tests/e2e/static-sites.test.js",
+    "test:regression": "jest tests/e2e/static-sites.test.js",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/C-Chambers/SimpleTerms.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/C-Chambers/SimpleTerms/issues"
+  },
+  "homepage": "https://github.com/C-Chambers/SimpleTerms#readme",
+  "devDependencies": {
+    "jest": "^30.1.1",
+    "puppeteer": "^24.17.0"
+  }
+}
