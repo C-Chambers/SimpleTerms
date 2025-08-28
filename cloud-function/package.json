@@ -1,0 +1,31 @@
+{
+  "name": "simpleterms-privacy-analyzer",
+  "version": "1.0.0",
+  "description": "Google Cloud Function for analyzing privacy policies with Gemini AI",
+  "main": "index.js",
+  "scripts": {
+    "start": "functions-framework --target=analyzePrivacyPolicy",
+    "deploy": "gcloud functions deploy analyzePrivacyPolicy --runtime nodejs20 --trigger-http --allow-unauthenticated",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.3.0",
+    "@google/generative-ai": "^0.7.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "privacy",
+    "policy",
+    "analysis",
+    "gemini",
+    "ai",
+    "chrome-extension"
+  ],
+  "author": "SimpleTerms",
+  "license": "MIT"
+}
