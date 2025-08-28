@@ -9,7 +9,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Your Chrome Extension ID (replace with actual extension ID)
-const ALLOWED_EXTENSION_ID = process.env.EXTENSION_ID || 'chrome-extension://your-extension-id-here';
+const ALLOWED_EXTENSION_ID = 'doiijdjjldampcdmgkefblfkofkhaeln';
 
 /**
  * HTTP Cloud Function for analyzing privacy policies
@@ -21,8 +21,7 @@ exports.analyzePrivacyPolicy = async (req, res) => {
     // Configure CORS headers for security
     const origin = req.get('Origin');
     const allowedOrigins = [
-      ALLOWED_EXTENSION_ID,
-      'chrome-extension://' + process.env.EXTENSION_ID
+      ALLOWED_EXTENSION_ID
     ].filter(Boolean);
 
     // Check if request is from allowed extension
