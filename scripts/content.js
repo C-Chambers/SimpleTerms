@@ -337,6 +337,29 @@
         return false;
     }
 
+    /**
+     * Normalize URL for duplicate detection
+     * @param {string} url - The URL to normalize
+     * @returns {string} Normalized URL
+     */
+    function normalizeUrl(url) {
+        try {
+            const urlObj = new URL(url);
+            // Remove fragments, query params, and normalize trailing slashes
+            let normalized = urlObj.origin + urlObj.pathname;
+            
+            // Remove trailing slash for consistency
+            if (normalized.endsWith('/') && normalized.length > urlObj.origin.length + 1) {
+                normalized = normalized.slice(0, -1);
+            }
+            
+            return normalized.toLowerCase();
+        } catch (error) {
+            // If URL parsing fails, return the original URL lowercased
+            return url.toLowerCase();
+        }
+    }
+
     function findPrivacyPolicyLink() {
         try {
             // Get all anchor tags on the page
@@ -415,16 +438,32 @@
             candidates.sort((a, b) => b.score - a.score);
             
             if (candidates.length > 0) {
-                // Get top 3 candidates (or less if fewer are available)
-                const topCandidates = candidates.slice(0, 3);
+                // Remove duplicates by normalized URL
+                const uniqueCandidates = [];
+                const seenUrls = new Set();
+                
+                for (const candidate of candidates) {
+                    // Normalize URL by removing fragments, query params, and trailing slashes
+                    const normalizedUrl = normalizeUrl(candidate.url);
+                    
+                    if (!seenUrls.has(normalizedUrl)) {
+                        seenUrls.add(normalizedUrl);
+                        uniqueCandidates.push(candidate);
+                    } else {
+                        console.log('SimpleTerms: Skipping duplicate URL:', candidate.url, '(normalized:', normalizedUrl + ')');
+                    }
+                }
+                
+                // Get top 3 unique candidates (or less if fewer are available)
+                const topCandidates = uniqueCandidates.slice(0, 3);
                 
                 // Enhanced logging for debugging link selection
-                console.log('SimpleTerms: Found', candidates.length, 'privacy policy candidates');
-                console.log('SimpleTerms: Top 3 candidates:');
+                console.log('SimpleTerms: Found', candidates.length, 'privacy policy candidates,', uniqueCandidates.length, 'unique');
+                console.log('SimpleTerms: Top', topCandidates.length, 'unique candidates:');
                 topCandidates.forEach((candidate, index) => {
                     console.log(`  ${index + 1}. Score: ${candidate.score}, Text: "${candidate.text}", URL: ${candidate.url}, Location: ${candidate.location}, Context: ${candidate.context}`);
                 });
-                console.log('SimpleTerms: Sending top', topCandidates.length, 'candidates to popup');
+                console.log('SimpleTerms: Sending', topCandidates.length, 'unique candidates to popup');
                 
                 // Send up to 3 URLs to the popup
                 chrome.runtime.sendMessage({
