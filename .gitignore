@@ -56,3 +56,9 @@ build/
 
 # Store submission assets
 store-assets/
+
+# Documentation and development files
+BUGFIX_LOG.md
+ICON_ART_OUTLINE.md
+TESTING_STRATEGY.md
+package-lock.json
