@@ -51,6 +51,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse({ success: true });
             });
             return true;
+
+        case 'FETCH_POLICY_CONTENT':
+            // Fetch privacy policy content (bypasses CSP restrictions)
+            fetchPolicyContent(message.url)
+                .then(html => {
+                    sendResponse({ success: true, html: html });
+                })
+                .catch(error => {
+                    console.error('SimpleTerms: Error fetching policy content:', error);
+                    sendResponse({ success: false, error: error.message });
+                });
+            return true; // Keep the message channel open for async response
             
         default:
             console.log('SimpleTerms: Unknown message type:', message.type);
@@ -67,5 +79,36 @@ chrome.action.onClicked.addListener((tab) => {
 chrome.runtime.onSuspend.addListener(() => {
     console.log('SimpleTerms: Extension is being suspended');
 });
+
+/**
+ * Fetch privacy policy content from URL (runs in background context, bypasses CSP)
+ * @param {string} url - URL to fetch
+ * @returns {Promise<string>} HTML content
+ */
+async function fetchPolicyContent(url) {
+    try {
+        console.log('SimpleTerms: Fetching policy content from:', url);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const html = await response.text();
+        console.log('SimpleTerms: Successfully fetched', html.length, 'characters');
+        
+        return html;
+        
+    } catch (error) {
+        console.error('SimpleTerms: Fetch error:', error);
+        throw new Error(`Failed to fetch policy content: ${error.message}`);
+    }
+}
 
 console.log('SimpleTerms: Background script loaded successfully');

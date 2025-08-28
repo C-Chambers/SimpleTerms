@@ -13,6 +13,28 @@ document.addEventListener('DOMContentLoaded', function() {
         return div.innerHTML;
     }
 
+    /**
+     * Fetch policy content using background script to bypass CSP restrictions
+     * @param {string} policyUrl - URL of the privacy policy to fetch
+     * @returns {Promise<string>} HTML content of the policy page
+     */
+    async function fetchPolicyContent(policyUrl) {
+        return new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage({
+                type: 'FETCH_POLICY_CONTENT',
+                url: policyUrl
+            }, (response) => {
+                if (chrome.runtime.lastError) {
+                    reject(new Error(chrome.runtime.lastError.message));
+                } else if (response.success) {
+                    resolve(response.html);
+                } else {
+                    reject(new Error(response.error || 'Failed to fetch policy content'));
+                }
+            });
+        });
+    }
+
     // Add event listener to the analyze button
     analyzeButton.addEventListener('click', async function() {
         try {
@@ -124,13 +146,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show loading spinner while processing
             showLoading('Fetching privacy policy...');
 
-            // Step 1: Fetch the raw HTML content from the policy URL
-            const response = await fetch(policyUrl);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch policy: ${response.status} ${response.statusText}`);
-            }
-
-            const html = await response.text();
+            // Step 1: Fetch the raw HTML content from the policy URL using background script
+            // This bypasses CSP restrictions that might block fetch in popup context
+            const html = await fetchPolicyContent(policyUrl);
             console.log('Fetched HTML content:', html.length, 'characters');
 
             // Step 2: Extract human-readable text content
