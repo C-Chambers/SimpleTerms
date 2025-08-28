@@ -6,34 +6,34 @@
 
     // Prioritized array of regex patterns to find privacy policy links
     const privacyPatterns = [
-        /privacy[-_]?policy/i,
-        /privacy[-_]?statement/i,
-        /privacy[-_]?notice/i,
-        /\/privacy\/?$/i,  // Matches /privacy/ or /privacy (simple privacy paths)
-        /data[-_]?protection/i,
-        /privacy/i,
-        /terms[-_]?of[-_]?service/i,
-        /terms[-_]?and[-_]?conditions/i,
-        /terms[-_]?of[-_]?use/i,
-        /\/terms\/?$/i,    // Matches /terms/ or /terms (simple terms paths)
+        /privacy[-_\s]?policy/i,           // Matches privacy-policy, privacy_policy, privacy policy
+        /privacy[-_\s]?statement/i,        // Matches privacy-statement, privacy_statement, privacy statement
+        /privacy[-_\s]?notice/i,           // Matches privacy-notice, privacy_notice, privacy notice
+        /\/privacy\/?$/i,                  // Matches /privacy/ or /privacy (simple privacy paths)
+        /data[-_\s]?protection/i,          // Matches data-protection, data protection, etc.
+        /privacy/i,                        // General privacy match
+        /terms[-_\s]?of[-_\s]?service/i,   // Matches terms-of-service, terms of service, etc.
+        /terms[-_\s]?and[-_\s]?conditions/i, // Matches terms-and-conditions, terms and conditions, etc.
+        /terms[-_\s]?of[-_\s]?use/i,       // Matches terms-of-use, terms of use, etc.
+        /\/terms\/?$/i,                    // Matches /terms/ or /terms (simple terms paths)
         /legal/i,
         /gdpr/i
     ];
 
     // Enhanced patterns for detecting if current page is a privacy/terms page
     const currentPagePatterns = [
-        /privacy[-_]?policy/i,
-        /privacy[-_]?statement/i,
-        /privacy[-_]?notice/i,
-        /\/privacy\/?$/i,  // Matches /privacy/ or /privacy (simple privacy paths)
-        /terms[-_]?of[-_]?service/i,
-        /terms[-_]?and[-_]?conditions/i,
-        /terms[-_]?of[-_]?use/i,
-        /\/terms\/?$/i,    // Matches /terms/ or /terms (simple terms paths)
-        /data[-_]?protection/i,
-        /cookie[-_]?policy/i,
-        /legal[-_]?notice/i,
-        /user[-_]?agreement/i,
+        /privacy[-_\s]?policy/i,           // Matches privacy-policy, privacy_policy, privacy policy
+        /privacy[-_\s]?statement/i,        // Matches privacy-statement, privacy_statement, privacy statement
+        /privacy[-_\s]?notice/i,           // Matches privacy-notice, privacy_notice, privacy notice
+        /\/privacy\/?$/i,                  // Matches /privacy/ or /privacy (simple privacy paths)
+        /terms[-_\s]?of[-_\s]?service/i,   // Matches terms-of-service, terms of service, etc.
+        /terms[-_\s]?and[-_\s]?conditions/i, // Matches terms-and-conditions, terms and conditions, etc.
+        /terms[-_\s]?of[-_\s]?use/i,       // Matches terms-of-use, terms of use, etc.
+        /\/terms\/?$/i,                    // Matches /terms/ or /terms (simple terms paths)
+        /data[-_\s]?protection/i,          // Matches data-protection, data protection, etc.
+        /cookie[-_\s]?policy/i,            // Matches cookie-policy, cookie policy, etc.
+        /legal[-_\s]?notice/i,             // Matches legal-notice, legal notice, etc.
+        /user[-_\s]?agreement/i,           // Matches user-agreement, user agreement, etc.
         /gdpr/i
     ];
 
