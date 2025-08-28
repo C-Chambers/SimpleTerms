@@ -63,6 +63,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     sendResponse({ success: false, error: error.message });
                 });
             return true; // Keep the message channel open for async response
+
+        case 'ANALYZE_WITH_CLOUD_FUNCTION':
+            // Analyze policy text with Cloud Function (bypasses CSP restrictions)
+            analyzeWithCloudFunction(message.policyText)
+                .then(result => {
+                    sendResponse({ success: true, result: result });
+                })
+                .catch(error => {
+                    console.error('SimpleTerms: Error analyzing with Cloud Function:', error);
+                    sendResponse({ success: false, error: error.message });
+                });
+            return true; // Keep the message channel open for async response
             
         default:
             console.log('SimpleTerms: Unknown message type:', message.type);
@@ -108,6 +120,74 @@ async function fetchPolicyContent(url) {
     } catch (error) {
         console.error('SimpleTerms: Fetch error:', error);
         throw new Error(`Failed to fetch policy content: ${error.message}`);
+    }
+}
+
+/**
+ * Analyze privacy policy text using Google Cloud Function (runs in background context, bypasses CSP)
+ * @param {string} policyText - The privacy policy text to analyze
+ * @returns {Promise<Object>} Analysis result with score and summary
+ */
+async function analyzeWithCloudFunction(policyText) {
+    try {
+        console.log('SimpleTerms: Sending request to Cloud Function...');
+        
+        const response = await fetch('https://us-central1-simpleterms-backend.cloudfunctions.net/analyzePrivacyPolicy', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Origin': 'chrome-extension://doiijdjjldampcdmgkefblfkofkhaeln'  // Extension origin for CORS
+            },
+            body: JSON.stringify({
+                policyText: policyText
+            })
+        });
+
+        // Check if request was successful
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('SimpleTerms: Cloud Function error response:', errorText);
+            throw new Error(`Cloud Function request failed: ${response.status} ${response.statusText}`);
+        }
+
+        // Parse JSON response
+        const result = await response.json();
+        console.log('SimpleTerms: Cloud Function response received');
+
+        // Validate response structure
+        if (!result.success || !result.data) {
+            throw new Error('Invalid response format from Cloud Function');
+        }
+
+        const { summary, score } = result.data;
+
+        // Validate analysis data
+        if (!summary || typeof score !== 'number') {
+            throw new Error('Invalid analysis data from Cloud Function');
+        }
+
+        // Convert markdown summary to array format for display
+        const summaryArray = summary.split('\n')
+            .filter(line => line.trim().startsWith('•') || line.trim().startsWith('-'))
+            .map(line => line.replace(/^[•\-]\s*/, '').trim())
+            .filter(line => line.length > 0);
+
+        return {
+            score: Math.min(10, Math.max(1, score)), // Ensure score is between 1-10
+            summary: summaryArray.length > 0 ? summaryArray : ['Analysis completed successfully']
+        };
+
+    } catch (error) {
+        console.error('SimpleTerms: Error calling Cloud Function:', error);
+        
+        // Re-throw with more specific error message
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            throw new Error('Cloud Function network error: Unable to connect to analysis service');
+        } else if (error.message.includes('CORS')) {
+            throw new Error('Cloud Function CORS error: Extension not authorized');
+        } else {
+            throw new Error('Cloud Function error: ' + error.message);
+        }
     }
 }
 
