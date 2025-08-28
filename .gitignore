@@ -1,0 +1,47 @@
+# SimpleTerms - Private Files
+
+# Confidential roadmap and business strategy
+ROADMAP.md
+BUSINESS_PLAN.md
+COMPETITIVE_ANALYSIS.md
+MARKET_RESEARCH.md
+
+# Development secrets
+.env
+.env.local
+.env.production
+secrets.json
+
+# Private notes and ideas
+NOTES.md
+IDEAS.md
+TODO_PRIVATE.md
+
+# User research and analytics
+user_data/
+analytics/
+research/
+
+# Business documents
+business/
+legal/
+partnerships/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.zip
+*.tar.gz
