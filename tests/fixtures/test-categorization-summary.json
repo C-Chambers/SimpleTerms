@@ -1,13 +1,13 @@
 {
   "regression": {
     "description": "Sites that consistently pass testing - used for regression testing",
-    "lastUpdated": "2025-08-28T17:35:38.302Z",
+    "lastUpdated": "2025-08-28T19:17:53.020Z",
     "totalSites": 0,
     "sites": []
   },
   "problematic": {
     "description": "Sites that currently fail testing - need fixes or enhanced strategies",
-    "lastUpdated": "2025-08-28T17:35:38.302Z",
+    "lastUpdated": "2025-08-28T19:17:53.021Z",
     "totalSites": 0,
     "sites": []
   },

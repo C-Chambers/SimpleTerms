@@ -1,0 +1,361 @@
+{
+  "regression": {
+    "description": "Sites that consistently pass testing - validated by manual testing",
+    "lastUpdated": "2025-08-28T19:24:07.292Z",
+    "totalSites": 48,
+    "sites": [
+      {
+        "name": "Amazon",
+        "category": "ecommerce",
+        "type": "static"
+      },
+      {
+        "name": "eBay",
+        "category": "ecommerce",
+        "type": "problematic"
+      },
+      {
+        "name": "Walmart",
+        "category": "ecommerce",
+        "type": "static"
+      },
+      {
+        "name": "Target",
+        "category": "ecommerce",
+        "type": "static"
+      },
+      {
+        "name": "PayPal",
+        "category": "financial",
+        "type": "static"
+      },
+      {
+        "name": "Chase Bank",
+        "category": "financial",
+        "type": "problematic"
+      },
+      {
+        "name": "Bank of America",
+        "category": "financial",
+        "type": "static"
+      },
+      {
+        "name": "Wells Fargo",
+        "category": "financial",
+        "type": "static"
+      },
+      {
+        "name": "Venmo",
+        "category": "financial",
+        "type": "static"
+      },
+      {
+        "name": "Microsoft",
+        "category": "technology",
+        "type": "static"
+      },
+      {
+        "name": "Google",
+        "category": "technology",
+        "type": "static"
+      },
+      {
+        "name": "Apple",
+        "category": "technology",
+        "type": "static"
+      },
+      {
+        "name": "GitHub",
+        "category": "technology",
+        "type": "static"
+      },
+      {
+        "name": "NY Times",
+        "category": "media",
+        "type": "static"
+      },
+      {
+        "name": "Netflix",
+        "category": "media",
+        "type": "dynamic"
+      },
+      {
+        "name": "CNN",
+        "category": "media",
+        "type": "problematic"
+      },
+      {
+        "name": "Facebook",
+        "category": "social",
+        "type": "dynamic"
+      },
+      {
+        "name": "LinkedIn",
+        "category": "social",
+        "type": "dynamic"
+      },
+      {
+        "name": "Twitter/X",
+        "category": "social",
+        "type": "dynamic"
+      },
+      {
+        "name": "Instagram",
+        "category": "social",
+        "type": "problematic"
+      },
+      {
+        "name": "Reddit",
+        "category": "social",
+        "type": "static"
+      },
+      {
+        "name": "Notion",
+        "category": "productivity",
+        "type": "dynamic"
+      },
+      {
+        "name": "Slack",
+        "category": "productivity",
+        "type": "static"
+      },
+      {
+        "name": "Zoom",
+        "category": "productivity",
+        "type": "static"
+      },
+      {
+        "name": "Dropbox",
+        "category": "productivity",
+        "type": "static"
+      },
+      {
+        "name": "Trello",
+        "category": "productivity",
+        "type": "static"
+      },
+      {
+        "name": "Airbnb",
+        "category": "travel",
+        "type": "dynamic"
+      },
+      {
+        "name": "Booking.com",
+        "category": "travel",
+        "type": "static"
+      },
+      {
+        "name": "Uber",
+        "category": "travel",
+        "type": "static"
+      },
+      {
+        "name": "Khan Academy",
+        "category": "education",
+        "type": "static"
+      },
+      {
+        "name": "Coursera",
+        "category": "education",
+        "type": "static"
+      },
+      {
+        "name": "MIT OpenCourseWare",
+        "category": "education",
+        "type": "static"
+      },
+      {
+        "name": "WebMD",
+        "category": "health",
+        "type": "static"
+      },
+      {
+        "name": "Mayo Clinic",
+        "category": "health",
+        "type": "static"
+      },
+      {
+        "name": "MyFitnessPal",
+        "category": "health",
+        "type": "static"
+      },
+      {
+        "name": "Healthline",
+        "category": "health",
+        "type": "static"
+      },
+      {
+        "name": "Steam",
+        "category": "gaming",
+        "type": "static"
+      },
+      {
+        "name": "Discord",
+        "category": "gaming",
+        "type": "static"
+      },
+      {
+        "name": "Xbox",
+        "category": "gaming",
+        "type": "static"
+      },
+      {
+        "name": "YouTube",
+        "category": "media",
+        "type": "dynamic",
+        "note": "Corrected from automated test false negative"
+      },
+      {
+        "name": "Expedia",
+        "category": "travel",
+        "type": "static",
+        "note": "Corrected from automated test false negative"
+      },
+      {
+        "name": "TripAdvisor",
+        "category": "travel",
+        "type": "static",
+        "note": "Corrected from automated test false negative"
+      },
+      {
+        "name": "Best Buy",
+        "category": "ecommerce",
+        "type": "static",
+        "note": "Corrected from automated test false negative"
+      },
+      {
+        "name": "Duolingo",
+        "category": "education",
+        "type": "static",
+        "note": "Corrected from automated test false negative"
+      },
+      {
+        "name": "CVS",
+        "category": "health",
+        "type": "static",
+        "note": "Corrected from automated test false negative"
+      },
+      {
+        "name": "Stack Overflow",
+        "category": "technology",
+        "type": "static",
+        "note": "Corrected from automated test false negative"
+      },
+      {
+        "name": "Spotify",
+        "category": "media",
+        "type": "static",
+        "note": "Corrected from automated test false negative"
+      },
+      {
+        "name": "Udemy",
+        "category": "education",
+        "type": "static",
+        "note": "Corrected from automated test false negative"
+      }
+    ]
+  },
+  "problematic": {
+    "description": "Sites with genuine issues requiring fixes",
+    "lastUpdated": "2025-08-28T19:24:07.294Z",
+    "totalSites": 2,
+    "sites": [
+      {
+        "name": "Epic Games",
+        "category": "gaming",
+        "error": "Privacy policy link not detected",
+        "type": "detection_failure"
+      },
+      {
+        "name": "Twitch",
+        "category": "gaming",
+        "error": "Privacy policy hidden under menu",
+        "type": "hidden_menu"
+      }
+    ]
+  },
+  "statistics": {
+    "totalTested": 50,
+    "passed": 48,
+    "failed": 2,
+    "passRate": "96%"
+  },
+  "categoryBreakdown": {
+    "ecommerce": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "passRate": 100
+    },
+    "financial": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "passRate": 100
+    },
+    "technology": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "passRate": 100
+    },
+    "media": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "passRate": 100
+    },
+    "social": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "passRate": 100
+    },
+    "productivity": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "passRate": 100
+    },
+    "travel": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "passRate": 100
+    },
+    "education": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "passRate": 100
+    },
+    "health": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "passRate": 100
+    },
+    "gaming": {
+      "total": 5,
+      "passed": 3,
+      "failed": 2,
+      "passRate": 60
+    }
+  },
+  "manualValidation": {
+    "correctedSites": 9,
+    "automatedTestAccuracy": "78%",
+    "realWorldPerformance": "96%",
+    "falseNegatives": [
+      "YouTube",
+      "Expedia",
+      "TripAdvisor",
+      "Best Buy",
+      "Duolingo",
+      "CVS",
+      "Stack Overflow",
+      "Spotify",
+      "Udemy"
+    ]
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "description": "Sites that currently fail testing - need fixes or enhanced strategies",
+  "lastUpdated": "2025-08-28T19:17:32.163Z",
+  "totalSites": 11,
+  "sites": [
+    {
+      "name": "Best Buy",
+      "category": "ecommerce",
+      "error": "Navigation timeout of 30000 ms exceeded",
+      "type": "timeout"
+    },
+    {
+      "name": "Stack Overflow",
+      "category": "technology",
+      "error": "Navigating frame was detached",
+      "type": "frame_detached"
+    },
+    {
+      "name": "Spotify",
+      "category": "media",
+      "error": "Cloud Function error: 503",
+      "type": "api_error"
+    },
+    {
+      "name": "YouTube",
+      "category": "media",
+      "error": "No privacy policy found by content script",
+      "type": "detection_failure"
+    },
+    {
+      "name": "Expedia",
+      "category": "travel",
+      "error": "No privacy policy found by content script",
+      "type": "detection_failure"
+    },
+    {
+      "name": "TripAdvisor",
+      "category": "travel",
+      "error": "No privacy policy found by content script",
+      "type": "detection_failure"
+    },
+    {
+      "name": "Udemy",
+      "category": "education",
+      "error": "Unknown error",
+      "type": "unknown"
+    },
+    {
+      "name": "Duolingo",
+      "category": "education",
+      "error": "Navigation timeout of 30000 ms exceeded",
+      "type": "timeout"
+    },
+    {
+      "name": "CVS",
+      "category": "health",
+      "error": "Navigation timeout of 30000 ms exceeded",
+      "type": "timeout"
+    },
+    {
+      "name": "Epic Games",
+      "category": "gaming",
+      "error": "No privacy policy found by content script",
+      "type": "detection_failure"
+    },
+    {
+      "name": "Twitch",
+      "category": "gaming",
+      "error": "No privacy policy found by content script",
+      "type": "detection_failure"
+    }
+  ]
+}

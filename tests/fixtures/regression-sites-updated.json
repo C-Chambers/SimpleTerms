@@ -1,0 +1,202 @@
+{
+  "description": "Sites that consistently pass testing - used for regression testing",
+  "lastUpdated": "2025-08-28T19:17:32.163Z",
+  "totalSites": 39,
+  "sites": [
+    {
+      "name": "Amazon",
+      "category": "ecommerce",
+      "type": "static"
+    },
+    {
+      "name": "eBay",
+      "category": "ecommerce",
+      "type": "problematic"
+    },
+    {
+      "name": "Walmart",
+      "category": "ecommerce",
+      "type": "static"
+    },
+    {
+      "name": "Target",
+      "category": "ecommerce",
+      "type": "static"
+    },
+    {
+      "name": "PayPal",
+      "category": "financial",
+      "type": "static"
+    },
+    {
+      "name": "Chase Bank",
+      "category": "financial",
+      "type": "problematic"
+    },
+    {
+      "name": "Bank of America",
+      "category": "financial",
+      "type": "static"
+    },
+    {
+      "name": "Wells Fargo",
+      "category": "financial",
+      "type": "static"
+    },
+    {
+      "name": "Venmo",
+      "category": "financial",
+      "type": "static"
+    },
+    {
+      "name": "Microsoft",
+      "category": "technology",
+      "type": "static"
+    },
+    {
+      "name": "Google",
+      "category": "technology",
+      "type": "static"
+    },
+    {
+      "name": "Apple",
+      "category": "technology",
+      "type": "static"
+    },
+    {
+      "name": "GitHub",
+      "category": "technology",
+      "type": "static"
+    },
+    {
+      "name": "NY Times",
+      "category": "media",
+      "type": "static"
+    },
+    {
+      "name": "Netflix",
+      "category": "media",
+      "type": "dynamic"
+    },
+    {
+      "name": "CNN",
+      "category": "media",
+      "type": "problematic"
+    },
+    {
+      "name": "Facebook",
+      "category": "social",
+      "type": "dynamic"
+    },
+    {
+      "name": "LinkedIn",
+      "category": "social",
+      "type": "dynamic"
+    },
+    {
+      "name": "Twitter/X",
+      "category": "social",
+      "type": "dynamic"
+    },
+    {
+      "name": "Instagram",
+      "category": "social",
+      "type": "problematic"
+    },
+    {
+      "name": "Reddit",
+      "category": "social",
+      "type": "static"
+    },
+    {
+      "name": "Notion",
+      "category": "productivity",
+      "type": "dynamic"
+    },
+    {
+      "name": "Slack",
+      "category": "productivity",
+      "type": "static"
+    },
+    {
+      "name": "Zoom",
+      "category": "productivity",
+      "type": "static"
+    },
+    {
+      "name": "Dropbox",
+      "category": "productivity",
+      "type": "static"
+    },
+    {
+      "name": "Trello",
+      "category": "productivity",
+      "type": "static"
+    },
+    {
+      "name": "Airbnb",
+      "category": "travel",
+      "type": "dynamic"
+    },
+    {
+      "name": "Booking.com",
+      "category": "travel",
+      "type": "static"
+    },
+    {
+      "name": "Uber",
+      "category": "travel",
+      "type": "static"
+    },
+    {
+      "name": "Khan Academy",
+      "category": "education",
+      "type": "static"
+    },
+    {
+      "name": "Coursera",
+      "category": "education",
+      "type": "static"
+    },
+    {
+      "name": "MIT OpenCourseWare",
+      "category": "education",
+      "type": "static"
+    },
+    {
+      "name": "WebMD",
+      "category": "health",
+      "type": "static"
+    },
+    {
+      "name": "Mayo Clinic",
+      "category": "health",
+      "type": "static"
+    },
+    {
+      "name": "MyFitnessPal",
+      "category": "health",
+      "type": "static"
+    },
+    {
+      "name": "Healthline",
+      "category": "health",
+      "type": "static"
+    },
+    {
+      "name": "Steam",
+      "category": "gaming",
+      "type": "static"
+    },
+    {
+      "name": "Discord",
+      "category": "gaming",
+      "type": "static"
+    },
+    {
+      "name": "Xbox",
+      "category": "gaming",
+      "type": "static"
+    }
+  ]
+}
