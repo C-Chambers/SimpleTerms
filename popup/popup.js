@@ -179,6 +179,12 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Extracted text content:', policyText.length, 'characters');
 
             if (!policyText || policyText.length < 100) {
+                // For dynamic content sites, provide more helpful guidance
+                if (policyUrl.includes('facebook.com') || policyUrl.includes('instagram.com') || 
+                    policyUrl.includes('twitter.com') || policyUrl.includes('linkedin.com') ||
+                    policyUrl.includes('tiktok.com') || policyUrl.includes('snapchat.com')) {
+                    throw new Error('Dynamic content detected: This site loads content with JavaScript. Navigate to the privacy policy page first, then click the extension button on that page.');
+                }
                 throw new Error('Privacy policy content appears to be too short or empty');
             }
 
@@ -199,7 +205,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (error.message.includes('Failed to fetch policy')) {
                 showError('Could not access the privacy policy. The page may require authentication or have CORS restrictions.');
             } else if (error.message.includes('too short or empty')) {
-                showError('The privacy policy content appears to be empty or too short to analyze.');
+                showError('The privacy policy content appears to be empty or too short to analyze. The page may use dynamic loading or require authentication.');
+            } else if (error.message.includes('Dynamic content detected')) {
+                showError(error.message); // Use the specific dynamic content message
             } else if (error.message.includes('Cloud Function')) {
                 showError('AI analysis service is temporarily unavailable. Please try again later.');
             } else {
