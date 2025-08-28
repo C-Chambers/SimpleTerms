@@ -168,13 +168,22 @@ async function analyzeWithCloudFunction(policyText) {
 
         // Convert markdown summary to array format for display
         const summaryArray = summary.split('\n')
-            .filter(line => line.trim().startsWith('•') || line.trim().startsWith('-'))
-            .map(line => line.replace(/^[•\-]\s*/, '').trim())
+            .filter(line => {
+                const trimmed = line.trim();
+                return trimmed.startsWith('•') || 
+                       trimmed.startsWith('-') || 
+                       trimmed.startsWith('*') || 
+                       /^\d+\./.test(trimmed); // Also handle numbered lists
+            })
+            .map(line => line.replace(/^[•\-\*]?\s*\d*\.?\s*/, '').trim())
             .filter(line => line.length > 0);
 
         return {
             score: Math.min(10, Math.max(1, score)), // Ensure score is between 1-10
-            summary: summaryArray.length > 0 ? summaryArray : ['Analysis completed successfully']
+            summary: summaryArray.length > 0 ? summaryArray : [
+                'Analysis completed but formatting issue detected',
+                'Raw response: ' + summary.substring(0, 200) + (summary.length > 200 ? '...' : '')
+            ]
         };
 
     } catch (error) {
