@@ -191,7 +191,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // For dynamic content sites, try advanced extraction
                 if (policyUrl.includes('facebook.com') || policyUrl.includes('instagram.com') || 
                     policyUrl.includes('twitter.com') || policyUrl.includes('linkedin.com') ||
-                    policyUrl.includes('tiktok.com') || policyUrl.includes('snapchat.com')) {
+                    policyUrl.includes('tiktok.com') || policyUrl.includes('snapchat.com') ||
+                    policyUrl.includes('notion.so')) {
                     
                     console.log('Detected dynamic content site, attempting advanced extraction...');
                     showLoading('Trying advanced content extraction...');
