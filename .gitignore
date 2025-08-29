@@ -67,3 +67,9 @@ package-lock.json
 manifest.prod.json
 *.pem
 *.crx
+
+# Environment variable files (contain sensitive IDs and keys)
+env-vars.yaml
+env-vars.yml
+.env.yaml
+.env.yml

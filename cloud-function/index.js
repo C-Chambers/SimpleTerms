@@ -8,9 +8,10 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Chrome Extension ID - Set via environment variable for production
-// Default to test extension ID for unpacked development
-const ALLOWED_EXTENSION_ID = process.env.EXTENSION_ID || 'doiijdjjldampcdmgkefblfkofkhaeln';
+// Chrome Extension IDs - Support both production and development
+// Can be a single ID or comma-separated list: "prod_id,dev_id,test_id"
+const EXTENSION_IDS = process.env.EXTENSION_ID || 'doiijdjjldampcdmgkefblfkofkhaeln';
+const ALLOWED_EXTENSION_IDS = EXTENSION_IDS.split(',').map(id => id.trim()).filter(Boolean);
 
 // Rate limiting - track requests per IP
 const requestTracker = new Map();
@@ -26,16 +27,19 @@ exports.analyzePrivacyPolicy = async (req, res) => {
   try {
       // Configure CORS headers for security
   const origin = req.get('Origin');
-  const allowedOrigins = [
-    `chrome-extension://${ALLOWED_EXTENSION_ID}`
-  ].filter(Boolean);
+  const allowedOrigins = ALLOWED_EXTENSION_IDS.map(id => `chrome-extension://${id}`);
 
-  // Production CORS configuration - only allow the extension
+  // CORS configuration - allow multiple extension IDs (production + development)
+  console.log(`Request from origin: ${origin}`);
+  console.log(`Allowed origins: ${JSON.stringify(allowedOrigins)}`);
+  
   if (origin && allowedOrigins.includes(origin)) {
     res.set('Access-Control-Allow-Origin', origin);
+    console.log(`✅ Authorized request from: ${origin}`);
   } else {
-    // In production, reject requests from unauthorized origins
-    console.warn(`Rejected request from unauthorized origin: ${origin}`);
+    // Reject requests from unauthorized origins
+    console.warn(`❌ Rejected request from unauthorized origin: ${origin}`);
+    console.warn(`Allowed origins: ${JSON.stringify(allowedOrigins)}`);
     return res.status(403).json({
       error: 'Forbidden',
       message: 'Request origin not authorized'
