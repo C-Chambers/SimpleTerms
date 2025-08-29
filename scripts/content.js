@@ -210,27 +210,143 @@
     }
 
     /**
-     * Recursively find all links including those in Shadow DOM
-     * @param {Document|DocumentFragment} root - The root to search from
-     * @returns {Array} Array of all link elements found
+     * Get regular DOM links (not Shadow DOM)
+     * @returns {Array} Array of regular link elements
      */
-    function findAllLinksIncludingShadowDOM(root = document) {
+    function findRegularLinks() {
+        return Array.from(document.querySelectorAll('a[href]'));
+    }
+
+    /**
+     * Score a single link for privacy policy relevance
+     * @param {Element} link - The link element to score
+     * @param {string} source - Source identifier ('regular-dom' or 'shadow-dom')
+     * @returns {Object|null} Candidate object or null if score is 0
+     */
+    function scoreLinkForPrivacy(link, source) {
+        const href = link.href.toLowerCase();
+        const text = (link.textContent || '').toLowerCase().trim();
+        const title = (link.title || '').toLowerCase();
+        
+        // Skip invalid links
+        if (href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) {
+            return null;
+        }
+
+        // Skip non-policy content
+        if (isNonPolicyContent(href, text)) {
+            return null;
+        }
+        
+        // CRUCIAL: Only process links that match privacy patterns (like main branch)
+        const urlMatches = privacyPatterns.some(pattern => pattern.test(href));
+        const textMatches = privacyPatterns.some(pattern => pattern.test(text));
+        const titleMatches = privacyPatterns.some(pattern => pattern.test(title));
+        
+        if (!urlMatches && !textMatches && !titleMatches) {
+            return null; // Skip links that don't match any privacy patterns
+        }
+        
+        let score = 0;
+        let reasons = [];
+
+        // Test against our priority patterns for detailed scoring
+        for (let i = 0; i < privacyPatterns.length; i++) {
+            const pattern = privacyPatterns[i];
+            let patternScore = 20 - i; // Higher scores for higher priority patterns
+
+            if (pattern.test(href)) {
+                score += patternScore + 10; // Bonus for URL match
+                reasons.push(`URL matches ${pattern.source}`);
+            }
+            if (pattern.test(text)) {
+                score += patternScore;
+                reasons.push(`Text matches ${pattern.source}`);
+            }
+            if (pattern.test(title)) {
+                score += patternScore / 2;
+                reasons.push(`Title matches ${pattern.source}`);
+            }
+        }
+
+        // Additional specific bonuses
+        if (href.includes('privacy-policy') || href.includes('privacy_policy')) {
+            score += 15;
+            reasons.push('Exact URL match');
+        }
+        if (text.includes('privacy policy')) {
+            score += 10;
+            reasons.push('Exact text match');
+        }
+
+        // Apply various scoring factors
+        const locationScore = calculateLocationScore(link);
+        score += locationScore;
+        if (locationScore > 0) {
+            reasons.push(`Good location (${locationScore})`);
+        }
+
+        const contextScore = calculateContextScore(link);
+        score += contextScore;
+        if (contextScore !== 0) {
+            reasons.push(`Context (${contextScore})`);
+        }
+
+        const qualityScore = calculateQualityScore(link, text);
+        score += qualityScore;
+        if (qualityScore !== 0) {
+            reasons.push(`Quality (${qualityScore})`);
+        }
+
+        // Policy-specific checks
+        if (isPolicyPageUrl(href)) {
+            score += 20;
+            reasons.push('Policy page URL');
+        }
+        
+        if (isPrivacySettingsPage(href, text)) {
+            score -= 25;
+            reasons.push('Privacy settings penalty');
+        }
+
+        if (score <= 0) {
+            return null;
+        }
+
+        return {
+            link: link,
+            url: href,
+            text: text,
+            score: score,
+            reasons: reasons,
+            source: source,
+            location: getElementLocation(link),
+            context: getElementContext(link)
+        };
+    }
+
+    /**
+     * Recursively find links in Shadow DOM only
+     * @param {Document|DocumentFragment} root - The root to search from
+     * @returns {Array} Array of shadow DOM link elements found
+     */
+    function findShadowDOMLinks(root = document) {
         const links = [];
         
         try {
-            // Get regular links in this root
-            const regularLinks = root.querySelectorAll('a[href]');
-            regularLinks.forEach(link => links.push(link));
-            
             // Find all elements that might have shadow roots
             const allElements = root.querySelectorAll('*');
             allElements.forEach(element => {
                 if (element.shadowRoot) {
                     console.log('SimpleTerms: Found shadow root in:', element.tagName, element.className || 'no-class');
                     
-                    // Recursively search inside the shadow root
-                    const shadowLinks = findAllLinksIncludingShadowDOM(element.shadowRoot);
+                    // Get links directly in this shadow root
+                    const shadowLinks = element.shadowRoot.querySelectorAll('a[href]');
                     shadowLinks.forEach(link => links.push(link));
+                    
+                    // Recursively search nested shadow roots
+                    const nestedShadowLinks = findShadowDOMLinks(element.shadowRoot);
+                    nestedShadowLinks.forEach(link => links.push(link));
                 }
             });
         } catch (error) {
@@ -478,82 +594,45 @@
 
     async function findPrivacyPolicyLink() {
         try {
-            // Get all anchor tags on the page (including Shadow DOM)
-            const links = findAllLinksIncludingShadowDOM();
-            const candidates = [];
+            // Phase 1: Search regular DOM links first
+            const regularLinks = findRegularLinks();
+            let candidates = [];
             
-            console.log('SimpleTerms: Found', links.length, 'total links (including shadow DOM)');
+            console.log('SimpleTerms: Found', regularLinks.length, 'regular DOM links');
 
-            // Score each link based on how well it matches our patterns
-            links.forEach(link => {
-                const href = link.href.toLowerCase();
-                const text = (link.textContent || '').toLowerCase().trim();
-                const title = (link.title || '').toLowerCase();
-                
-                // Skip mailto, tel, and javascript links
-                if (href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) {
-                    return;
-                }
-
-                // Skip help center articles, support pages, and other non-policy content
-                if (isNonPolicyContent(href, text)) {
-                    return;
-                }
-
-                // Check URL, text content, and title against patterns
-                const urlMatches = privacyPatterns.some(pattern => pattern.test(href));
-                const textMatches = privacyPatterns.some(pattern => pattern.test(text));
-                const titleMatches = privacyPatterns.some(pattern => pattern.test(title));
-
-                if (urlMatches || textMatches || titleMatches) {
-                    let score = 0;
-                    
-                    // Higher score for URL matches (most reliable)
-                    if (urlMatches) score += 10;
-                    if (textMatches) score += 5;
-                    if (titleMatches) score += 3;
-                    
-                    // Bonus for exact matches
-                    if (href.includes('privacy-policy') || href.includes('privacy_policy')) score += 15;
-                    if (text.includes('privacy policy')) score += 10;
-                    
-                    // BONUS for specific policy language (vs generic privacy text)
-                    if (text.includes('privacy notice') || text.includes('privacy statement')) score += 12;
-                    
-                    // Penalty for terms-only matches (less specific)
-                    if (href.includes('terms') && !href.includes('privacy')) score -= 5;
-                    
-                    // BONUS for URLs that are definitely policy pages (not help articles)
-                    if (isPolicyPageUrl(href)) score += 20;
-                    
-                    // PENALTY for privacy settings/preferences pages (not actual policies)
-                    if (isPrivacySettingsPage(href, text)) score -= 25;
-                    
-                    // LOCATION-BASED SCORING (prioritize footer over navigation)
-                    const locationScore = calculateLocationScore(link);
-                    score += locationScore;
-                    
-                    // CONTEXT-BASED SCORING (avoid dropdowns and hidden elements)
-                    const contextScore = calculateContextScore(link);
-                    score += contextScore;
-                    
-                    // LINK QUALITY SCORING (prefer standalone links over generic text)
-                    const qualityScore = calculateQualityScore(link, text);
-                    score += qualityScore;
-                    
-                    candidates.push({
-                        url: link.href,
-                        text: text,
-                        score: score,
-                        element: link,
-                        location: getElementLocation(link),
-                        context: getElementContext(link)
-                    });
+            // Score regular DOM links
+            regularLinks.forEach(link => {
+                const candidate = scoreLinkForPrivacy(link, 'regular-dom');
+                if (candidate) {
+                    candidates.push(candidate);
                 }
             });
 
-            // Sort by score and return the best matches
+            // Sort by score (highest first)
             candidates.sort((a, b) => b.score - a.score);
+
+            // Phase 2: Only search Shadow DOM if we don't have good candidates
+            const highQualityThreshold = 25; // Minimum score for a "good" privacy policy link
+            const hasHighQualityCandidates = candidates.length > 0 && candidates[0].score >= highQualityThreshold;
+
+            if (!hasHighQualityCandidates) {
+                console.log('SimpleTerms: No high-quality candidates in regular DOM, searching Shadow DOM...');
+                const shadowLinks = findShadowDOMLinks();
+                console.log('SimpleTerms: Found', shadowLinks.length, 'shadow DOM links');
+                
+                // Score shadow DOM links and add to candidates
+                shadowLinks.forEach(link => {
+                    const candidate = scoreLinkForPrivacy(link, 'shadow-dom');
+                    if (candidate) {
+                        candidates.push(candidate);
+                    }
+                });
+                
+                // Re-sort with new shadow DOM candidates
+                candidates.sort((a, b) => b.score - a.score);
+            } else {
+                console.log('SimpleTerms: Found high-quality candidates in regular DOM, skipping Shadow DOM search');
+            }
             
             if (candidates.length > 0) {
                 // Remove duplicates by normalized URL

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "SimpleTerms",
   "version": "1.0.2",
-  "description": "AI-powered privacy policy analyzer that provides instant summaries and risk scores for any website. Understand what data companies collect in plain language.",
+  "description": "AI-powered privacy policy analyzer providing instant summaries and risk scores. Understand what companies collect.",
   "action": {
     "default_popup": "popup/popup.html",
     "default_title": "SimpleTerms - Analyze Privacy Policy"
@@ -11,20 +11,31 @@
     "activeTab",
     "scripting",
     "storage",
-    "tabs"
+    "tabs",
+    "notifications"
   ],
-
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "background": {
     "service_worker": "scripts/background.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["https://extensionpay.com/*"],
+      "js": ["scripts/ExtPay.js"],
+      "run_at": "document_start"
+    }
+  ],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "host_permissions": [
-    "<all_urls>"
-  ],
+  
   "author": "SimpleTerms Team",
-  "minimum_chrome_version": "88"
+  "minimum_chrome_version": "88",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
 }

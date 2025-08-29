@@ -1,22 +1,365 @@
 // SimpleTerms Popup JavaScript
+
+// Initialize ExtensionPay
+const extpay = ExtPay(SimpleTermsConfig.extensionpay.extensionId);
+
 document.addEventListener('DOMContentLoaded', function() {
     const analyzeButton = document.getElementById('analyzeButton');
     const resultsContainer = document.getElementById('resultsContainer');
     const tabsContainer = document.getElementById('tabsContainer');
     const tabButtons = document.getElementById('tabButtons');
     
+    // Pro tier elements
+    const planBadge = document.getElementById('planBadge');
+    const subscriptionActions = document.getElementById('subscriptionActions');
+    const upgradeButton = document.getElementById('upgradeButton');
+    const loginButton = document.getElementById('loginButton');
+    const usageCounter = document.getElementById('usageCounter');
+    const usageCount = document.getElementById('usageCount');
+    const premiumTeaser = document.getElementById('premiumTeaser');
+    const teaserUpgradeButton = document.getElementById('teaserUpgradeButton');
+    const proFeatureBadge = document.getElementById('proFeatureBadge');
+    
     // Store multiple policy results
     let policyResults = [];
     let currentTabIndex = 0;
+    let userSubscriptionInfo = { paid: false, plan: 'Free' };
+    let dailyUsageCount = 0;
     
-    // Configuration for Cloud Function endpoint
-    const CLOUD_FUNCTION_URL = 'https://us-central1-simpleterms-backend.cloudfunctions.net/analyzePrivacyPolicy';
+    // Load configuration from config.js
+    const config = window.SimpleTermsConfig || {
+        features: { dailyAnalysisLimit: 5 },
+        cloudFunction: { url: 'https://us-central1-simpleterms-backend.cloudfunctions.net/analyzePrivacyPolicy' }
+    };
+    
+    const DAILY_USAGE_LIMIT = config.features.dailyAnalysisLimit;
+    const CLOUD_FUNCTION_URL = config.cloudFunction.url;
+
+    // Initialize the extension on load
+    initializeExtension();
 
     // Security: HTML escape function to prevent XSS
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    /**
+     * Initialize the extension - check subscription status and setup UI
+     */
+    async function initializeExtension() {
+        try {
+            // Load subscription info and daily usage
+            await loadUserSubscriptionInfo();
+            await loadDailyUsage();
+            
+            // Update UI based on subscription status
+            updateSubscriptionUI();
+            updateUsageUI();
+            
+            // Setup event listeners for payment buttons
+            setupPaymentEventListeners();
+            
+        } catch (error) {
+            console.error('Error initializing extension:', error);
+            // Default to free tier on error
+            updateSubscriptionUI();
+        }
+    }
+
+    /**
+     * Load user subscription information from background script
+     */
+    async function loadUserSubscriptionInfo() {
+        try {
+            const user = await extpay.getUser();
+            userSubscriptionInfo = {
+                paid: user.paid || false,
+                installedAt: user.installedAt,
+                subscriptionStatus: user.subscriptionStatus || (user.paid ? 'active' : 'free'),
+                subscriptionCancelAt: user.subscriptionCancelAt || null,
+                trialStartedAt: user.trialStartedAt,
+                email: user.email || null,
+                plan: user.paid ? 'Pro' : 'Free'
+            };
+            return userSubscriptionInfo;
+        } catch (error) {
+            console.error('Error loading user subscription info:', error);
+            // Default to free tier on error
+            userSubscriptionInfo = { paid: false, plan: 'Free' };
+            return userSubscriptionInfo;
+        }
+    }
+
+    /**
+     * Load daily usage count from storage
+     */
+    async function loadDailyUsage() {
+        return new Promise((resolve) => {
+            chrome.storage.local.get(['summaryCount', 'lastUsageReset'], (data) => {
+                const today = new Date().toDateString();
+                const lastReset = data.lastUsageReset;
+                
+                // Reset count if it's a new day
+                if (lastReset !== today) {
+                    dailyUsageCount = 0;
+                    chrome.storage.local.set({
+                        summaryCount: 0,
+                        lastUsageReset: today
+                    });
+                } else {
+                    dailyUsageCount = data.summaryCount || 0;
+                }
+                resolve(dailyUsageCount);
+            });
+        });
+    }
+
+    /**
+     * Update subscription UI based on current user status
+     */
+    function updateSubscriptionUI() {
+        if (userSubscriptionInfo.paid) {
+            // Pro user
+            planBadge.textContent = 'Pro';
+            planBadge.className = 'plan-badge pro';
+            subscriptionActions.style.display = 'none';
+            
+            // Hide usage counter for pro users
+            usageCounter.style.display = 'none';
+            
+            // Show pro badge if analyzing with premium features
+            proFeatureBadge.style.display = 'block';
+        } else {
+            // Free user
+            planBadge.textContent = 'Free';
+            planBadge.className = 'plan-badge free';
+            subscriptionActions.style.display = 'flex';
+            
+            // Show usage counter
+            usageCounter.style.display = 'block';
+            
+            // Hide pro badge
+            proFeatureBadge.style.display = 'none';
+            
+            // Show premium teaser occasionally
+            if (Math.random() < 0.3) { // 30% chance
+                premiumTeaser.style.display = 'block';
+            }
+        }
+    }
+
+    /**
+     * Update usage counter UI
+     */
+    function updateUsageUI() {
+        if (!userSubscriptionInfo.paid) {
+            usageCount.textContent = `${dailyUsageCount}/${DAILY_USAGE_LIMIT}`;
+            
+            // Disable analyze button if limit reached
+            if (dailyUsageCount >= DAILY_USAGE_LIMIT) {
+                analyzeButton.disabled = true;
+                analyzeButton.textContent = 'Daily Limit Reached';
+                analyzeButton.style.background = '#bdc3c7';
+            }
+        }
+    }
+
+    /**
+     * Setup event listeners for payment-related buttons
+     */
+    function setupPaymentEventListeners() {
+        upgradeButton.addEventListener('click', () => openPaymentPage());
+        loginButton.addEventListener('click', () => openLoginPage());
+        teaserUpgradeButton.addEventListener('click', () => openPaymentPage());
+    }
+
+    /**
+     * Open ExtensionPay payment page
+     */
+    async function openPaymentPage() {
+        try {
+            await extpay.openPaymentPage();
+        } catch (error) {
+            console.error('Error opening payment page:', error);
+        }
+    }
+
+    /**
+     * Open ExtensionPay login page for existing subscribers
+     */
+    async function openLoginPage() {
+        try {
+            await extpay.openLoginPage();
+        } catch (error) {
+            console.error('Error opening login page:', error);
+        }
+    }
+
+    /**
+     * Check if user can perform analysis (considering limits)
+     */
+    function canPerformAnalysis() {
+        if (userSubscriptionInfo.paid) {
+            return true; // No limits for pro users
+        }
+        return dailyUsageCount < DAILY_USAGE_LIMIT;
+    }
+
+    /**
+     * Increment usage count and update storage
+     */
+    async function incrementUsageCount() {
+        if (!userSubscriptionInfo.paid) {
+            dailyUsageCount++;
+            chrome.storage.local.set({ summaryCount: dailyUsageCount });
+            updateUsageUI();
+        }
+    }
+
+    /**
+     * Generate GDPR compliance score and details (Pro feature)
+     * @param {string} policyText - The privacy policy text
+     * @param {number} privacyScore - Base privacy risk score
+     * @returns {Object} GDPR compliance analysis
+     */
+    function generateGDPRCompliance(policyText, privacyScore) {
+        if (!userSubscriptionInfo.paid) {
+            return null; // Free users don't get GDPR analysis
+        }
+
+        const policyLower = policyText.toLowerCase();
+        
+        // GDPR compliance checks
+        const checks = {
+            'Right to Access': checkTextForTerms(policyLower, ['access', 'request data', 'view data', 'data subject access']),
+            'Right to Rectification': checkTextForTerms(policyLower, ['correct', 'rectify', 'update', 'modify data']),
+            'Right to Erasure': checkTextForTerms(policyLower, ['delete', 'remove', 'erase', 'right to be forgotten']),
+            'Data Portability': checkTextForTerms(policyLower, ['export', 'download', 'portability', 'transfer data']),
+            'Consent Management': checkTextForTerms(policyLower, ['consent', 'withdraw', 'opt-out', 'unsubscribe']),
+            'Data Processing Lawfulness': checkTextForTerms(policyLower, ['lawful basis', 'legitimate interest', 'legal basis']),
+            'Privacy by Design': checkTextForTerms(policyLower, ['privacy by design', 'data protection', 'minimal data']),
+            'Data Protection Officer': checkTextForTerms(policyLower, ['dpo', 'data protection officer', 'privacy officer'])
+        };
+
+        // Calculate overall GDPR score
+        const complianceValues = Object.values(checks);
+        const compliantCount = complianceValues.filter(c => c === 'compliant').length;
+        const partialCount = complianceValues.filter(c => c === 'partial').length;
+        
+        // Score calculation (excellent, good, fair, poor)
+        const totalChecks = complianceValues.length;
+        const score = (compliantCount * 2 + partialCount) / (totalChecks * 2);
+        
+        let rating, scoreClass;
+        if (score >= 0.8) {
+            rating = 'Excellent';
+            scoreClass = 'excellent';
+        } else if (score >= 0.6) {
+            rating = 'Good';
+            scoreClass = 'good';
+        } else if (score >= 0.4) {
+            rating = 'Fair';
+            scoreClass = 'fair';
+        } else {
+            rating = 'Poor';
+            scoreClass = 'poor';
+        }
+
+        return {
+            overallRating: rating,
+            scoreClass: scoreClass,
+            score: Math.round(score * 100),
+            checks: checks,
+            summary: `${compliantCount} compliant, ${partialCount} partial, ${totalChecks - compliantCount - partialCount} non-compliant`
+        };
+    }
+
+    /**
+     * Check text for compliance terms and return status
+     * @param {string} text - Text to check
+     * @param {Array} terms - Terms to look for
+     * @returns {string} 'compliant', 'partial', or 'non-compliant'
+     */
+    function checkTextForTerms(text, terms) {
+        const foundTerms = terms.filter(term => text.includes(term));
+        
+        if (foundTerms.length >= 2) {
+            return 'compliant';
+        } else if (foundTerms.length === 1) {
+            return 'partial';
+        } else {
+            return 'non-compliant';
+        }
+    }
+
+    /**
+     * Perform analysis with GDPR compliance (Pro feature)
+     * @param {string} policyText - The privacy policy text
+     * @returns {Promise<Object>} Analysis result with optional GDPR data
+     */
+    async function analyzeWithGDPR(policyText) {
+        const analysisResult = await analyzeWithCloudFunction(policyText);
+        
+        // Add GDPR compliance for Pro users
+        if (userSubscriptionInfo.paid) {
+            analysisResult.gdprCompliance = generateGDPRCompliance(policyText, analysisResult.score);
+        } else {
+            analysisResult.gdprCompliance = null; // Show locked section for free users
+        }
+        
+        return analysisResult;
+    }
+
+    /**
+     * Generate HTML for GDPR compliance section
+     * @param {Object} gdprData - GDPR compliance data
+     * @returns {string} HTML string
+     */
+    function generateGDPRHTML(gdprData) {
+        if (!gdprData) {
+            // Show locked GDPR section for free users
+            return `
+                <div class="gdpr-compliance gdpr-locked">
+                    <div class="gdpr-title">
+                        🛡️ GDPR Compliance Analysis
+                    </div>
+                    <div class="gdpr-score">
+                        Pro Feature
+                    </div>
+                    <div style="font-size: 12px; color: #666; margin-top: 8px;">
+                        Upgrade to Pro to see detailed GDPR compliance analysis
+                    </div>
+                </div>
+            `;
+        }
+
+        // Generate details list
+        const detailsHTML = Object.entries(gdprData.checks)
+            .map(([check, status]) => `
+                <li>
+                    <span class="compliance-item">${check}</span>
+                    <span class="compliance-status ${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                </li>
+            `).join('');
+
+        return `
+            <div class="gdpr-compliance">
+                <div class="gdpr-title">
+                    🛡️ GDPR Compliance Analysis
+                </div>
+                <div class="gdpr-score ${gdprData.scoreClass}">
+                    ${gdprData.score}% ${gdprData.overallRating}
+                </div>
+                <ul class="gdpr-details">
+                    ${detailsHTML}
+                </ul>
+                <div style="font-size: 11px; color: #666; margin-top: 8px; text-align: center;">
+                    ${gdprData.summary}
+                </div>
+            </div>
+        `;
     }
 
     // Format URL for display - show hostname + path, truncate if too long
@@ -72,11 +415,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 showError('You are offline. Please connect to the internet and try again.');
                 return;
             }
+
+            // Check usage limits for free users
+            if (!canPerformAnalysis()) {
+                showError(`Daily limit reached (${DAILY_USAGE_LIMIT} analyses). Upgrade to Pro for unlimited analyses!`);
+                premiumTeaser.style.display = 'block';
+                return;
+            }
             
             // Disable button and show loading state
             analyzeButton.disabled = true;
             analyzeButton.textContent = 'Analyzing...';
             showLoading();
+
+            // Increment usage count for free users
+            await incrementUsageCount();
 
             // Get the active tab
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -228,39 +581,62 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             console.log(`Analyzing policy for tab ${tabIndex}:`, policy.url);
             
-            // Fetch the raw HTML content
-            const html = await fetchPolicyContent(policy.url);
-            console.log(`Tab ${tabIndex} - Fetched HTML:`, html.length, 'characters');
+            let html, policyText;
+            
+            let shouldTryTabExtraction = false;
+            
+            try {
+                // Fetch the raw HTML content
+                html = await fetchPolicyContent(policy.url);
+                console.log(`Tab ${tabIndex} - Fetched HTML:`, html.length, 'characters');
 
-            // Extract text content
-            const policyText = extractTextFromHTML(html);
-            console.log(`Tab ${tabIndex} - Extracted text:`, policyText.length, 'characters');
+                // Extract text content
+                policyText = extractTextFromHTML(html);
+                console.log(`Tab ${tabIndex} - Extracted text:`, policyText.length, 'characters');
+                
+                // If content is too short, try tab extraction
+                if (!policyText || policyText.length < 100) {
+                    shouldTryTabExtraction = true;
+                }
+                
+            } catch (fetchError) {
+                console.log(`Tab ${tabIndex} - Fetch failed:`, fetchError.message);
+                // If fetch failed, try tab extraction as fallback
+                shouldTryTabExtraction = true;
+            }
 
-            if (!policyText || policyText.length < 100) {
-                // Try advanced extraction for dynamic sites
-                if (policy.url.includes('facebook.com') || policy.url.includes('instagram.com') || 
-                    policy.url.includes('twitter.com') || policy.url.includes('linkedin.com') ||
-                    policy.url.includes('tiktok.com') || policy.url.includes('snapchat.com') ||
-                    policy.url.includes('notion.so') || policy.url.includes('epicgames.com')) {
-                    
-                    console.log(`Tab ${tabIndex} - Detected dynamic content site, attempting advanced extraction...`);
-                    
+            // Universal fallback: if regular fetch failed OR content too short, try tab extraction
+            if (shouldTryTabExtraction) {
+                console.log(`Tab ${tabIndex} - Trying tab extraction as fallback...`);
+                
+                try {
                     const dynamicContent = await tryAdvancedExtraction(policy.url);
                     if (dynamicContent && dynamicContent.length > 100) {
-                        console.log(`Tab ${tabIndex} - Advanced extraction successful:`, dynamicContent.length, 'characters');
+                        console.log(`Tab ${tabIndex} - Tab extraction successful:`, dynamicContent.length, 'characters');
                         const analysisResult = await analyzeWithCloudFunction(dynamicContent);
-                        displayResultsInTab(analysisResult.score, analysisResult.summary, policy.url, tabIndex, policy.text);
+                        
+                        // Add GDPR compliance for Pro users only
+                        if (userSubscriptionInfo.paid) {
+                            analysisResult.gdprCompliance = generateGDPRCompliance(dynamicContent, analysisResult.score);
+                            displayResultsInTab(analysisResult.score, analysisResult.summary, policy.url, tabIndex, policy.text, analysisResult.gdprCompliance);
+                        } else {
+                            displayResultsInTab(analysisResult.score, analysisResult.summary, policy.url, tabIndex, policy.text);
+                        }
                         return;
+                    } else {
+                        throw new Error('Tab extraction also failed to get sufficient content');
                     }
+                } catch (tabError) {
+                    console.log(`Tab ${tabIndex} - Tab extraction failed:`, tabError.message);
+                    throw new Error('Privacy policy content could not be extracted. This may be a complex dynamic site or require authentication.');
                 }
-                throw new Error('Privacy policy content appears to be too short or empty');
             }
 
             // Analyze with AI
-            const analysisResult = await analyzeWithCloudFunction(policyText);
+            const analysisResult = await analyzeWithGDPR(policyText);
             
             // Display results in the specific tab
-            displayResultsInTab(analysisResult.score, analysisResult.summary, policy.url, tabIndex, policy.text);
+            displayResultsInTab(analysisResult.score, analysisResult.summary, policy.url, tabIndex, policy.text, analysisResult.gdprCompliance);
             
         } catch (error) {
             console.error(`Error analyzing policy for tab ${tabIndex}:`, error);
@@ -268,7 +644,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function displayResultsInTab(score, summary, policyUrl, tabIndex, policyText) {
+    function displayResultsInTab(score, summary, policyUrl, tabIndex, policyText, gdprCompliance = null) {
         const tabContent = document.getElementById(`tab-content-${tabIndex}`);
         if (!tabContent) return;
         
@@ -284,6 +660,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const summaryHtml = summary.map(point => `<li>${escapeHtml(point)}</li>`).join('');
+        const gdprHtml = generateGDPRHTML(gdprCompliance);
 
         tabContent.innerHTML = `
             <div class="document-title">
@@ -296,6 +673,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="score-value ${scoreClass}">${score}/10</div>
                 <div class="score-description ${scoreClass}">${scoreDescription}</div>
             </div>
+            ${gdprHtml}
             <div class="summary-container">
                 <div class="summary-title">Key Points:</div>
                 <ul class="summary-list">
@@ -308,7 +686,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         // Store result
-        policyResults[tabIndex] = { score, summary, policyUrl, policyText };
+        policyResults[tabIndex] = { score, summary, policyUrl, policyText, gdprCompliance };
     }
 
     function displayErrorInTab(errorMessage, tabIndex) {
@@ -338,10 +716,10 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Current page content length:', message.content.length, 'characters');
 
             // Send the current page content directly to AI analysis
-            const analysisResult = await analyzeWithCloudFunction(message.content);
+            const analysisResult = await analyzeWithGDPR(message.content);
 
             // Display results with indication this was current page analysis
-            displayCurrentPageResults(analysisResult.score, analysisResult.summary, message.url, message.confidence);
+            displayCurrentPageResults(analysisResult.score, analysisResult.summary, message.url, message.confidence, analysisResult.gdprCompliance);
             resetButton();
 
         } catch (error) {
@@ -379,38 +757,43 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Extracted text content:', policyText.length, 'characters');
 
             if (!policyText || policyText.length < 100) {
-                // For dynamic content sites, try advanced extraction
-                if (policyUrl.includes('facebook.com') || policyUrl.includes('instagram.com') || 
-                    policyUrl.includes('twitter.com') || policyUrl.includes('linkedin.com') ||
-                    policyUrl.includes('tiktok.com') || policyUrl.includes('snapchat.com') ||
-                    policyUrl.includes('notion.so')) {
-                    
-                    console.log('Detected dynamic content site, attempting advanced extraction...');
-                    showLoading('Trying advanced content extraction...');
-                    
+                // Universal fallback: try tab extraction for any site with insufficient content
+                console.log('Content too short, attempting tab extraction...');
+                showLoading('Trying advanced content extraction...');
+                
+                try {
                     const dynamicContent = await tryAdvancedExtraction(policyUrl);
                     if (dynamicContent && dynamicContent.length > 100) {
-                        console.log('Advanced extraction successful:', dynamicContent.length, 'characters');
+                        console.log('Tab extraction successful:', dynamicContent.length, 'characters');
                         showLoading('Analyzing privacy policy with AI...');
+                        
                         const analysisResult = await analyzeWithCloudFunction(dynamicContent);
-                        displayResults(analysisResult.score, analysisResult.summary, policyUrl);
+                        
+                        // Add GDPR compliance for Pro users only
+                        if (userSubscriptionInfo.paid) {
+                            analysisResult.gdprCompliance = generateGDPRCompliance(dynamicContent, analysisResult.score);
+                            displayResults(analysisResult.score, analysisResult.summary, policyUrl, analysisResult.gdprCompliance);
+                        } else {
+                            displayResults(analysisResult.score, analysisResult.summary, policyUrl);
+                        }
                         resetButton();
                         return;
                     }
-                    
-                    throw new Error('Dynamic content detected: This site loads content with JavaScript. Navigate to the privacy policy page first, then click the extension button on that page.');
+                } catch (tabError) {
+                    console.log('Tab extraction failed:', tabError.message);
                 }
-                throw new Error('Privacy policy content appears to be too short or empty');
+                
+                throw new Error('Privacy policy content could not be extracted. This may be a complex dynamic site or require authentication.');
             }
 
             // Step 3: Show loading spinner for AI analysis
             showLoading('Analyzing privacy policy with AI...');
 
             // Step 4: Send to Google Cloud Function for AI analysis
-            const analysisResult = await analyzeWithCloudFunction(policyText);
+            const analysisResult = await analyzeWithGDPR(policyText);
 
             // Step 5: Display the results
-            displayResults(analysisResult.score, analysisResult.summary, policyUrl);
+            displayResults(analysisResult.score, analysisResult.summary, policyUrl, analysisResult.gdprCompliance);
             resetButton();
 
         } catch (error) {
@@ -479,12 +862,18 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 const content = await attemptExtraction(policyUrl, initialWaitTime);
                 
+                console.log(`Attempt ${attempt} result:`, {
+                    contentExists: !!content,
+                    contentLength: content?.length || 0,
+                    contentPreview: content?.substring(0, 100) + '...'
+                });
+                
                 if (content && content.length > 100) {
-                    console.log(`Extraction successful on attempt ${attempt}, content length:`, content.length);
+                    console.log(`✅ Extraction successful on attempt ${attempt}, content length:`, content.length);
                     return content;
                 }
                 
-                console.log(`Attempt ${attempt} failed: content too short (${content?.length || 0} chars)`);
+                console.log(`❌ Attempt ${attempt} failed: content too short (${content?.length || 0} chars)`);
                 
                 // If not the last attempt, wait before retrying
                 if (attempt < maxRetries) {
@@ -593,7 +982,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return new Promise((resolve, reject) => {
             chrome.runtime.sendMessage({
                 type: 'ANALYZE_WITH_CLOUD_FUNCTION',
-                policyText: policyText
+                policyText: policyText,
+                includePremiumFeatures: userSubscriptionInfo.paid
             }, (response) => {
                 if (chrome.runtime.lastError) {
                     reject(new Error(chrome.runtime.lastError.message));
@@ -606,7 +996,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function displayResults(score, summary, policyUrl) {
+    function displayResults(score, summary, policyUrl, gdprCompliance = null) {
         let scoreClass = 'score-low';
         let scoreDescription = 'Low Risk';
         
@@ -619,6 +1009,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const summaryHtml = summary.map(point => `<li>${escapeHtml(point)}</li>`).join('');
+        const gdprHtml = generateGDPRHTML(gdprCompliance);
 
         resultsContainer.innerHTML = `
             <div class="document-title">
@@ -631,6 +1022,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="score-value ${scoreClass}">${score}/10</div>
                 <div class="score-description ${scoreClass}">${scoreDescription}</div>
             </div>
+            ${gdprHtml}
             <div class="summary-container">
                 <div class="summary-title">Key Points:</div>
                 <ul class="summary-list">
@@ -646,7 +1038,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resetButton();
     }
 
-    function displayCurrentPageResults(score, summary, policyUrl, confidence) {
+    function displayCurrentPageResults(score, summary, policyUrl, confidence, gdprCompliance) {
         let scoreClass = 'score-low';
         let scoreDescription = 'Low Risk';
         
@@ -659,6 +1051,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const summaryHtml = summary.map(point => `<li>${escapeHtml(point)}</li>`).join('');
+        const gdprHtml = generateGDPRHTML(gdprCompliance);
 
         // Add a visual indicator that this was analyzed from the current page
         const currentPageBadge = `
@@ -679,6 +1072,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="score-value ${scoreClass}">${score}/10</div>
                 <div class="score-description ${scoreClass}">${scoreDescription}</div>
             </div>
+            ${gdprHtml}
             <div class="summary-container">
                 <div class="summary-title">Key Points:</div>
                 <ul class="summary-list">

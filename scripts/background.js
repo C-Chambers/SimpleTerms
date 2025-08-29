@@ -1,9 +1,16 @@
 // SimpleTerms Background Script (Service Worker)
 // Handles background tasks and extension lifecycle events
 
-// Import logger utility
+// Import logger utility, configuration, and ExtensionPay
 importScripts('logger.js');
+importScripts('config.js');
+importScripts('ExtPay.js');
+
 const logger = new SimpleTermsLogger('Background');
+
+// Initialize ExtensionPay - following ExtensionPay guidelines
+const extpay = ExtPay(SimpleTermsConfig.extensionpay.extensionId);
+extpay.startBackground(); // Required line for ExtPay to work
 
 chrome.runtime.onInstalled.addListener((details) => {
     logger.info('Extension installed/updated:', details.reason);
@@ -70,7 +77,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         case 'ANALYZE_WITH_CLOUD_FUNCTION':
             // Analyze policy text with Cloud Function (bypasses CSP restrictions)
-            analyzeWithCloudFunction(message.policyText)
+            analyzeWithCloudFunction(message.policyText, message.includePremiumFeatures)
                 .then(result => {
                     sendResponse({ success: true, result: result });
                 })
@@ -79,6 +86,75 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     sendResponse({ success: false, error: error.message });
                 });
             return true; // Keep the message channel open for async response
+
+        case 'CHECK_PAYMENT_STATUS':
+            // Check if user has Pro subscription
+            extpay.getUser()
+                .then(user => {
+                    sendResponse({ success: true, isPaid: user.paid || false });
+                })
+                .catch(error => {
+                    logger.error('Error checking payment status:', error);
+                    sendResponse({ success: false, error: error.message, isPaid: false });
+                });
+            return true;
+
+        case 'GET_USER_INFO':
+            // Get complete user subscription information
+            extpay.getUser()
+                .then(user => {
+                    const userInfo = {
+                        paid: user.paid || false,
+                        installedAt: user.installedAt,
+                        subscriptionStatus: user.subscriptionStatus || (user.paid ? 'active' : 'free'),
+                        subscriptionCancelAt: user.subscriptionCancelAt || null,
+                        trialStartedAt: user.trialStartedAt,
+                        email: user.email || null,
+                        plan: user.paid ? 'Pro' : 'Free'
+                    };
+                    sendResponse({ success: true, userInfo: userInfo });
+                })
+                .catch(error => {
+                    logger.error('Error getting user info:', error);
+                    sendResponse({ success: false, error: error.message });
+                });
+            return true;
+
+        case 'OPEN_PAYMENT_PAGE':
+            // Open ExtensionPay payment page
+            extpay.openPaymentPage()
+                .then(() => {
+                    sendResponse({ success: true });
+                })
+                .catch(error => {
+                    logger.error('Error opening payment page:', error);
+                    sendResponse({ success: false, error: error.message });
+                });
+            return true;
+
+        case 'OPEN_LOGIN_PAGE':
+            // Open ExtensionPay login page for existing subscribers
+            extpay.openLoginPage()
+                .then(() => {
+                    sendResponse({ success: true });
+                })
+                .catch(error => {
+                    logger.error('Error opening login page:', error);
+                    sendResponse({ success: false, error: error.message });
+                });
+            return true;
+
+        case 'START_FREE_TRIAL':
+            // Start free trial
+            extpay.openTrialPage()
+                .then(() => {
+                    sendResponse({ success: true });
+                })
+                .catch(error => {
+                    logger.error('Error starting free trial:', error);
+                    sendResponse({ success: false, error: error.message });
+                });
+            return true;
             
         default:
             logger.warn('Unknown message type:', message.type);
@@ -149,20 +225,29 @@ async function fetchPolicyContent(url) {
             throw new Error('No internet connection. Please check your network and try again.');
         }
         
-        logger.debug('Fetching policy content from:', url);
+        logger.debug('Fetching policy content via cloud function from:', url);
         
-        const response = await fetchWithRetry(url, {
-            method: 'GET',
+        // Use cloud function to fetch the content (bypasses CORS and reduces permissions needed)
+        const cloudFunctionUrl = SimpleTermsConfig.cloudFunction.url.replace('analyzePrivacyPolicy', 'fetchPrivacyPolicy');
+        
+        const response = await fetchWithRetry(cloudFunctionUrl, {
+            method: 'POST',
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-            }
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url: url })
         });
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        const html = await response.text();
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to fetch policy content');
+        }
+        
+        const html = result.html;
         logger.debug('Successfully fetched', html.length, 'characters');
         
         return html;
@@ -176,9 +261,10 @@ async function fetchPolicyContent(url) {
 /**
  * Analyze privacy policy text using Google Cloud Function (runs in background context, bypasses CSP)
  * @param {string} policyText - The privacy policy text to analyze
+ * @param {boolean} includePremiumFeatures - Whether to include premium analysis features
  * @returns {Promise<Object>} Analysis result with score and summary
  */
-async function analyzeWithCloudFunction(policyText) {
+async function analyzeWithCloudFunction(policyText, includePremiumFeatures = false) {
     try {
         // Check if offline
         if (!navigator.onLine) {
@@ -194,7 +280,8 @@ async function analyzeWithCloudFunction(policyText) {
                 'Origin': `chrome-extension://${chrome.runtime.id}`  // Dynamic extension origin for CORS
             },
             body: JSON.stringify({
-                policyText: policyText
+                policyText: policyText,
+                includePremiumFeatures: includePremiumFeatures
             })
         }, 2); // Max 2 retries for Cloud Function
 

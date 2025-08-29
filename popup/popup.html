@@ -8,13 +8,45 @@
 </head>
 <body>
     <div class="main-container">
+        <!-- Subscription Status Header -->
+        <div id="subscriptionHeader" class="subscription-header">
+            <div class="plan-badge" id="planBadge">Loading...</div>
+            <div class="subscription-actions" id="subscriptionActions" style="display: none;">
+                <button id="upgradeButton" class="upgrade-btn">Upgrade to Pro</button>
+                <button id="loginButton" class="login-btn">Already have Pro?</button>
+            </div>
+        </div>
+
         <h1>SimpleTerms</h1>
+        
+        <!-- Daily Usage Counter (Free users only) -->
+        <div id="usageCounter" class="usage-counter" style="display: none;">
+            <span id="usageCount">0/5</span> analyses today
+        </div>
+
         <button id="analyzeButton">Analyze Policy</button>
+        
+        <!-- Premium Feature Teaser -->
+        <div id="premiumTeaser" class="premium-teaser" style="display: none;">
+            <div class="teaser-content">
+                <h3>🔒 Pro Feature Available</h3>
+                <p>Get detailed GDPR compliance analysis and unlimited summaries</p>
+                <button id="teaserUpgradeButton" class="teaser-upgrade-btn">Upgrade to Pro</button>
+            </div>
+        </div>
+
         <div id="tabsContainer" style="display: none;">
             <div id="tabButtons"></div>
         </div>
         <div id="resultsContainer"></div>
+
+        <!-- Pro Feature Badge -->
+        <div id="proFeatureBadge" class="pro-feature-badge" style="display: none;">
+            ✨ Pro Analysis
+        </div>
     </div>
+    <script src="../scripts/config.js"></script>
+    <script src="../scripts/ExtPay.js"></script>
     <script src="popup.js"></script>
 </body>
 </html>
