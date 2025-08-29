@@ -1,75 +1,100 @@
 # SimpleTerms - Private Files
 
-# Confidential roadmap and business strategy
-ROADMAP.md
-MONETIZATION_STRATEGY.md
-BUSINESS_PLAN.md
-COMPETITIVE_ANALYSIS.md
-MARKET_RESEARCH.md
+# ALL MARKDOWN FILES (Business Sensitive Documents)
+# Note: Exceptions for public-facing files
+*.md
+!README.md
+!CLAUDE.md
+!PRIVACY_POLICY.md
 
-# Development secrets
-.env
-.env.local
-.env.production
-.env.yaml
-secrets.json
-cloud-function/.env.yaml
+# Development secrets and environment files
+.env*
+env-vars.*
+secrets.*
+**/secrets.*
+**/.env*
+cloud-function/.env*
 
-# Private notes and ideas
-NOTES.md
-IDEAS.md
-TODO_PRIVATE.md
+# Configuration files with sensitive data
+scripts/config.prod.js
+**/config.prod.*
+**/config.local.*
 
-# User research and analytics
-user_data/
-analytics/
-research/
-
-# Business documents
+# Private notes and business documents
+NOTES.*
+IDEAS.*
+TODO_PRIVATE.*
 business/
 legal/
 partnerships/
+user_data/
+analytics/
+research/
 
 # IDE and OS files
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+*.swp
+*.swo
+*.tmp
 
 # Logs
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Dependencies
 node_modules/
-cloud-function/node_modules/
+**/node_modules/
 
-# Build outputs
+# Build outputs and artifacts
 dist/
 build/
 *.zip
 *.tar.gz
-
-# Chrome extension files
 *.crx
 *.pem
+*.key
+*.p12
+*.backup
+*-backup.*
+*_backup.*
+
+# Chrome extension distribution files
+manifest.prod.json
+SimpleTerms-v*.zip
+*-production*.zip
+*-FINAL*.zip
+*-FIXED*.zip
 
 # Store submission assets
 store-assets/
+screenshots/
+promotional/
 
-# Documentation and development files
-BUGFIX_LOG.md
-ICON_ART_OUTLINE.md
-TESTING_STRATEGY.md
+# OS and editor temp files
+*~
+.#*
+#*#
+.*.swp
+.*.swo
+._*
+
+# Package manager files
 package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
-# Production build files
-manifest.prod.json
-*.pem
-*.crx
+# Testing and coverage
+coverage/
+.nyc_output/
+test-results/
+.coverage/
 
-# Environment variable files (contain sensitive IDs and keys)
-env-vars.yaml
-env-vars.yml
-.env.yaml
-.env.yml
+# Local development
+local/
+temp/
+tmp/
