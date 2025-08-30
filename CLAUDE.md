@@ -102,3 +102,4 @@ For local development, the cloud function needs to be deployed separately with p
 - When running tests, remember to run the static site test suite (npm run test:static) and not EVERY test (npm test)
 - When committing and pushing changes, remember to see if we need to remove any production keys/secrets. If so, copy our production manifest to manifest.prod.json in the config folder, and replace our prod keys with space/nothing
 - when making logic or UI changes in the future, consider both normal and dynamic page logic
+- Anytime we make a change to the cloud server, remind me to restart it, and tell me which function to restart
