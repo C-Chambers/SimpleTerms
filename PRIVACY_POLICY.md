@@ -101,20 +101,9 @@ We may update this Privacy Policy from time to time. We will notify users of any
 - Posting a notice in the extension (for significant changes)
 - Updating the version number in the Chrome Web Store
 
-## Open Source Transparency
-
-SimpleTerms is open source. You can review our entire codebase at:
-https://github.com/C-Chambers/SimpleTerms
-
-This allows you to:
-- Verify our privacy practices
-- Understand exactly how your data is processed
-- Contribute to improving the extension
-
 ## Contact Information
 
 For privacy-related questions or concerns about SimpleTerms, please:
-- Open an issue on our GitHub repository: https://github.com/C-Chambers/SimpleTerms/issues
 - Email: [Contact email to be provided]
 
 ## Legal Basis for Processing (GDPR)
