@@ -9,6 +9,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabsContainer = document.getElementById('tabsContainer');
     const tabButtons = document.getElementById('tabButtons');
     
+    // Analysis type selector elements
+    const analysisTypeContainer = document.getElementById('analysisTypeContainer');
+    const analysisTypeSelect = document.getElementById('analysisTypeSelect');
+    
     // Theme toggle elements
     const themeToggle = document.getElementById('themeToggle');
     const themeToggleSwitch = themeToggle.querySelector('.theme-toggle-switch');
@@ -30,6 +34,11 @@ document.addEventListener('DOMContentLoaded', function() {
     let userSubscriptionInfo = { paid: false, plan: 'Free' };
     let dailyUsageCount = 0;
     let currentTheme = 'light'; // Default theme
+    
+    // Unified analysis interface state
+    let currentAnalysisType = 'standard';
+    let currentPolicyData = null; // Store current policy text/URL for re-analysis
+    let lastAnalysisResult = null; // Store last analysis result
     
     // Load configuration from config.js
     const config = window.SimpleTermsConfig || {
@@ -116,6 +125,81 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Theme toggle event listener
     themeToggle.addEventListener('click', toggleTheme);
+    
+    // Analysis type change event listener
+    analysisTypeSelect.addEventListener('change', handleAnalysisTypeChange);
+
+    /**
+     * Handle analysis type change - re-analyze when switching types
+     */
+    async function handleAnalysisTypeChange() {
+        const newAnalysisType = analysisTypeSelect.value;
+        
+        if (newAnalysisType === currentAnalysisType || !currentPolicyData) {
+            return; // No change or no data to re-analyze
+        }
+        
+        currentAnalysisType = newAnalysisType;
+        
+        // Check if user has access to GDPR analysis
+        if (currentAnalysisType === 'gdpr' && !userSubscriptionInfo.paid) {
+            // Show locked GDPR analysis for free users
+            showLockedGDPRAnalysis();
+            return;
+        }
+        
+        // Re-analyze with new analysis type
+        try {
+            showLoading(`Switching to ${newAnalysisType === 'standard' ? 'Standard' : 'GDPR'} analysis...`);
+            await performAnalysisWithType(currentPolicyData, currentAnalysisType);
+        } catch (error) {
+            console.error('Error re-analyzing with new type:', error);
+            showError('Failed to switch analysis type. Please try again.');
+        }
+    }
+    
+    /**
+     * Show locked GDPR analysis for free users
+     */
+    function showLockedGDPRAnalysis() {
+        const gdprHtml = generateGDPRHTML(null); // null triggers locked state
+        resultsContainer.innerHTML = gdprHtml;
+        premiumTeaser.style.display = 'block';
+    }
+    
+    /**
+     * Perform analysis with the specified type
+     */
+    async function performAnalysisWithType(policyData, analysisType) {
+        const policyText = policyData.text || policyData.content;
+        const policyUrl = policyData.url;
+        const isCurrentPage = policyData.content !== undefined; // Current page if has content property
+        
+        if (analysisType === 'standard') {
+            // Standard analysis only
+            const analysisResult = await analyzeWithCloudFunction(policyText);
+            
+            if (isCurrentPage && policyData.confidence) {
+                displayCurrentPageUnifiedResults(analysisResult.score, analysisResult.summary, policyUrl, policyData.confidence, analysisType);
+            } else {
+                displayUnifiedResults(analysisResult.score, analysisResult.summary, policyUrl, null, analysisType);
+            }
+        } else if (analysisType === 'gdpr') {
+            // GDPR analysis
+            if (userSubscriptionInfo.paid) {
+                const analysisResult = await analyzeWithCloudFunction(policyText);
+                const gdprCompliance = generateGDPRCompliance(policyText, analysisResult.score);
+                
+                if (isCurrentPage && policyData.confidence) {
+                    displayCurrentPageUnifiedResults(analysisResult.score, analysisResult.summary, policyUrl, policyData.confidence, analysisType);
+                } else {
+                    displayUnifiedResults(analysisResult.score, analysisResult.summary, policyUrl, gdprCompliance, analysisType);
+                }
+            } else {
+                showLockedGDPRAnalysis();
+            }
+        }
+    }
 
     // Security: HTML escape function to prevent XSS
     function escapeHtml(text) {
@@ -307,6 +391,171 @@ document.addEventListener('DOMContentLoaded', function() {
             chrome.storage.local.set({ summaryCount: dailyUsageCount });
             updateUsageUI();
         }
+    }
+
+    /**
+     * Display unified results using GDPR-style design for all analysis types
+     */
+    function displayUnifiedResults(score, summary, policyUrl, gdprCompliance, analysisType) {
+        let scoreClass = 'score-low';
+        let scoreDescription = 'Low Risk';
+        
+        if (score >= 4 && score <= 6) {
+            scoreClass = 'score-medium';
+            scoreDescription = 'Medium Risk';
+        } else if (score >= 7) {
+            scoreClass = 'score-high';
+            scoreDescription = 'High Risk';
+        }
+
+        let contentHtml = '';
+        
+        if (analysisType === 'standard') {
+            // Standard analysis in GDPR-style box
+            const summaryHtml = summary.map(point => `<li style="font-size: 12px; padding: 4px 0; margin-bottom: 8px; line-height: 1.4;">${escapeHtml(point)}</li>`).join('');
+            
+            contentHtml = `
+                <div class="gdpr-compliance">
+                    <div class="gdpr-title">
+                        📄 Privacy Policy Analysis
+                    </div>
+                    <div class="gdpr-score ${scoreClass}">
+                        ${score}/10 ${scoreDescription}
+                    </div>
+                    <div class="gdpr-details">
+                        <div style="font-size: 13px; font-weight: 600; color: var(--text-tertiary); margin: 10px 0 8px 0;">Key Points:</div>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            ${summaryHtml}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        } else if (analysisType === 'gdpr') {
+            // GDPR analysis
+            if (gdprCompliance) {
+                const detailsHTML = Object.entries(gdprCompliance.checks)
+                    .map(([check, status]) => `
+                        <li>
+                            <span class="compliance-item">${check}</span>
+                            <span class="compliance-status ${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                        </li>
+                    `).join('');
+
+                contentHtml = `
+                    <div class="gdpr-compliance">
+                        <div class="gdpr-title">
+                            🛡️ GDPR Compliance Analysis
+                        </div>
+                        <div class="gdpr-score ${gdprCompliance.scoreClass}">
+                            ${gdprCompliance.score}% ${gdprCompliance.overallRating}
+                        </div>
+                        <ul class="gdpr-details">
+                            ${detailsHTML}
+                        </ul>
+                        <div style="font-size: 11px; color: #666; margin-top: 8px; text-align: center;">
+                            ${gdprCompliance.summary}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Locked GDPR for free users
+                contentHtml = generateGDPRHTML(null);
+            }
+        }
+
+        resultsContainer.innerHTML = `
+            ${contentHtml}
+            <div style="margin-top: 10px; font-size: 12px; color: #6c757d; text-align: center;">
+                Analyzed: <a href="${escapeHtml(policyUrl)}" target="_blank" rel="noopener noreferrer" style="color: #667eea;" title="${escapeHtml(policyUrl)}">${escapeHtml(formatUrlForDisplay(policyUrl))}</a>
+            </div>
+        `;
+    }
+
+    /**
+     * Display unified current page results with confidence indicator
+     */
+    function displayCurrentPageUnifiedResults(score, summary, policyUrl, confidence, analysisType) {
+        let scoreClass = 'score-low';
+        let scoreDescription = 'Low Risk';
+        
+        if (score >= 4 && score <= 6) {
+            scoreClass = 'score-medium';
+            scoreDescription = 'Medium Risk';
+        } else if (score >= 7) {
+            scoreClass = 'score-high';
+            scoreDescription = 'High Risk';
+        }
+
+        let contentHtml = '';
+        
+        if (analysisType === 'standard') {
+            // Standard analysis in GDPR-style box with current page indicator
+            const summaryHtml = summary.map(point => `<li style="font-size: 12px; padding: 4px 0; margin-bottom: 8px; line-height: 1.4;">${escapeHtml(point)}</li>`).join('');
+            
+            contentHtml = `
+                <div class="gdpr-compliance">
+                    <div class="gdpr-title">
+                        📄 Current Page Analysis
+                    </div>
+                    <div style="font-size: 11px; color: #666; margin-bottom: 8px;">
+                        Detection confidence: ${confidence}%
+                    </div>
+                    <div class="gdpr-score ${scoreClass}">
+                        ${score}/10 ${scoreDescription}
+                    </div>
+                    <div class="gdpr-details">
+                        <div style="font-size: 13px; font-weight: 600; color: var(--text-tertiary); margin: 10px 0 8px 0;">Key Points:</div>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            ${summaryHtml}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        } else if (analysisType === 'gdpr') {
+            // GDPR analysis for current page
+            if (userSubscriptionInfo.paid) {
+                const gdprCompliance = generateGDPRCompliance(currentPolicyData.content, score);
+                if (gdprCompliance) {
+                    const detailsHTML = Object.entries(gdprCompliance.checks)
+                        .map(([check, status]) => `
+                            <li>
+                                <span class="compliance-item">${check}</span>
+                                <span class="compliance-status ${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                            </li>
+                        `).join('');
+
+                    contentHtml = `
+                        <div class="gdpr-compliance">
+                            <div class="gdpr-title">
+                                🛡️ Current Page GDPR Analysis
+                            </div>
+                            <div style="font-size: 11px; color: #666; margin-bottom: 8px;">
+                                Detection confidence: ${confidence}%
+                            </div>
+                            <div class="gdpr-score ${gdprCompliance.scoreClass}">
+                                ${gdprCompliance.score}% ${gdprCompliance.overallRating}
+                            </div>
+                            <ul class="gdpr-details">
+                                ${detailsHTML}
+                            </ul>
+                            <div style="font-size: 11px; color: #666; margin-top: 8px; text-align: center;">
+                                ${gdprCompliance.summary}
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                // Locked GDPR for free users
+                contentHtml = generateGDPRHTML(null);
+            }
+        }
+
+        resultsContainer.innerHTML = `
+            ${contentHtml}
+            <div style="margin-top: 10px; font-size: 12px; color: #6c757d; text-align: center;">
+                Current Page: <a href="${escapeHtml(policyUrl)}" target="_blank" rel="noopener noreferrer" style="color: #667eea;" title="${escapeHtml(policyUrl)}">${escapeHtml(formatUrlForDisplay(policyUrl))}</a>
+            </div>
+        `;
     }
 
     /**
@@ -750,26 +999,23 @@ document.addEventListener('DOMContentLoaded', function() {
             scoreDescription = 'High Risk';
         }
 
-        const summaryHtml = summary.map(point => `<li>${escapeHtml(point)}</li>`).join('');
-        const gdprHtml = generateGDPRHTML(gdprCompliance);
-
+        // Use unified GDPR-style design for tabs too
+        const summaryHtml = summary.map(point => `<li style="font-size: 12px; padding: 4px 0; margin-bottom: 8px; line-height: 1.4;">${escapeHtml(point)}</li>`).join('');
+        
         tabContent.innerHTML = `
-            <div class="document-title">
-                <div style="font-size: 14px; font-weight: 600; color: #495057; text-align: center; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #667eea;">
+            <div class="gdpr-compliance">
+                <div class="gdpr-title">
                     📄 ${escapeHtml(policyText || 'Privacy Policy')}
                 </div>
-            </div>
-            <div class="score-container">
-                <div class="score-label">Privacy Risk Score</div>
-                <div class="score-value ${scoreClass}">${score}/10</div>
-                <div class="score-description ${scoreClass}">${scoreDescription}</div>
-            </div>
-            ${gdprHtml}
-            <div class="summary-container">
-                <div class="summary-title">Key Points:</div>
-                <ul class="summary-list">
-                    ${summaryHtml}
-                </ul>
+                <div class="gdpr-score ${scoreClass}">
+                    ${score}/10 ${scoreDescription}
+                </div>
+                <div class="gdpr-details">
+                    <div style="font-size: 13px; font-weight: 600; color: var(--text-tertiary); margin: 10px 0 8px 0;">Key Points:</div>
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        ${summaryHtml}
+                    </ul>
+                </div>
             </div>
             <div style="margin-top: 10px; font-size: 12px; color: #6c757d; text-align: center;">
                 Analyzed: <a href="${escapeHtml(policyUrl)}" target="_blank" rel="noopener noreferrer" style="color: #667eea;" title="${escapeHtml(policyUrl)}">${escapeHtml(formatUrlForDisplay(policyUrl))}</a>
@@ -809,8 +1055,15 @@ document.addEventListener('DOMContentLoaded', function() {
             // Send the current page content directly to AI analysis
             const analysisResult = await analyzeWithGDPR(message.content);
 
-            // Display results with indication this was current page analysis
-            displayCurrentPageResults(analysisResult.score, analysisResult.summary, message.url, message.confidence, analysisResult.gdprCompliance);
+            // Store policy data for unified interface including confidence
+            currentPolicyData = { content: message.content, url: message.url, confidence: message.confidence };
+            lastAnalysisResult = analysisResult;
+            
+            // Show analysis type selector
+            analysisTypeContainer.style.display = 'block';
+            
+            // Display results with current page indication
+            displayCurrentPageUnifiedResults(analysisResult.score, analysisResult.summary, message.url, message.confidence, 'standard');
             resetButton();
 
         } catch (error) {
@@ -860,13 +1113,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         const analysisResult = await analyzeWithCloudFunction(dynamicContent);
                         
-                        // Add GDPR compliance for Pro users only
-                        if (userSubscriptionInfo.paid) {
-                            analysisResult.gdprCompliance = generateGDPRCompliance(dynamicContent, analysisResult.score);
-                            displayResults(analysisResult.score, analysisResult.summary, policyUrl, analysisResult.gdprCompliance);
-                        } else {
-                            displayResults(analysisResult.score, analysisResult.summary, policyUrl);
-                        }
+                        // Store policy data and display unified results
+                        currentPolicyData = { text: dynamicContent, url: policyUrl };
+                        lastAnalysisResult = analysisResult;
+                        
+                        // Show analysis type selector
+                        analysisTypeContainer.style.display = 'block';
+                        
+                        // Display results using unified interface
+                        displayUnifiedResults(analysisResult.score, analysisResult.summary, policyUrl, null, 'standard');
                         resetButton();
                         return;
                     }
@@ -883,8 +1138,15 @@ document.addEventListener('DOMContentLoaded', function() {
             // Step 4: Send to Google Cloud Function for AI analysis
             const analysisResult = await analyzeWithGDPR(policyText);
 
-            // Step 5: Display the results
-            displayResults(analysisResult.score, analysisResult.summary, policyUrl, analysisResult.gdprCompliance);
+            // Step 5: Store policy data and display unified results
+            currentPolicyData = { text: policyText, url: policyUrl };
+            lastAnalysisResult = analysisResult;
+            
+            // Show analysis type selector
+            analysisTypeContainer.style.display = 'block';
+            
+            // Display results using unified interface
+            displayUnifiedResults(analysisResult.score, analysisResult.summary, policyUrl, null, 'standard');
             resetButton();
 
         } catch (error) {
@@ -1187,5 +1449,11 @@ document.addEventListener('DOMContentLoaded', function() {
         currentTabIndex = 0;
         tabsContainer.style.display = 'none';
         tabButtons.innerHTML = '';
+        // Reset unified analysis state
+        currentPolicyData = null;
+        lastAnalysisResult = null;
+        currentAnalysisType = 'standard';
+        analysisTypeSelect.value = 'standard';
+        analysisTypeContainer.style.display = 'none';
     }
 });
