@@ -571,21 +571,7 @@ function validateAndNormalizeResult(result, isPremium, policyText) {
     console.log('=== GDPR VALIDATION DEBUG ===');
     console.log('Original GDPR result:', result.gdpr);
     
-    // SPECIAL CASE: Override for SimpleTerms privacy policy (our own policy should be 100% compliant)
-    const isSimpleTermsPolicy = policyText.toLowerCase().includes('simpleterms') && 
-                                policyText.toLowerCase().includes('article 15 gdpr') &&
-                                policyText.toLowerCase().includes('privacy-by-design');
-    
-    if (isSimpleTermsPolicy) {
-      console.log('*** DETECTED SIMPLETERMS PRIVACY POLICY - FORCING 100% COMPLIANCE ***');
-      result.gdpr = {
-        access: 'compliant',
-        rectification: 'compliant',
-        erasure: 'compliant',
-        portability: 'compliant',
-        consent: 'compliant'
-      };
-    } else if (!result.gdpr || typeof result.gdpr !== 'object') {
+    if (!result.gdpr || typeof result.gdpr !== 'object') {
       console.log('No GDPR object found, using defaults');
       result.gdpr = getDefaultGdprCompliance();
     } else {
@@ -731,13 +717,20 @@ function getDefaultGdprCompliance() {
  */
 function validateGdprCompliance(gdpr) {
   const validValues = ['compliant', 'partial', 'non-compliant'];
-  const defaultValue = 'partial';
   
   const fields = ['access', 'rectification', 'erasure', 'portability', 'consent'];
   const validated = {};
   
   fields.forEach(field => {
-    validated[field] = validValues.includes(gdpr[field]) ? gdpr[field] : defaultValue;
+    if (validValues.includes(gdpr[field])) {
+      // Use AI's assessment if it's a valid value
+      validated[field] = gdpr[field];
+      console.log(`GDPR ${field}: AI returned "${gdpr[field]}" - keeping as is`);
+    } else {
+      // Only default to partial if AI returned invalid/undefined value
+      console.log(`GDPR ${field}: AI returned "${gdpr[field]}" (invalid) - defaulting to partial`);
+      validated[field] = 'partial';
+    }
   });
   
   return validated;
