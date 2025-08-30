@@ -776,7 +776,7 @@ async function analyzeWithGemini(policyText, isPremium = false) {
     
     // Get the Gemini model optimized for maximum consistency
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       generationConfig: {
         temperature: 0.0, // Minimum temperature for maximum consistency
         topP: 0.1,        // Very low randomness in token selection
