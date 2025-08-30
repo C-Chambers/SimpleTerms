@@ -100,3 +100,4 @@ The extension communicates with a Google Cloud Function at:
 
 For local development, the cloud function needs to be deployed separately with proper CORS configuration for testing.
 - When running tests, remember to run the static site test suite (npm run test:static) and not EVERY test (npm test)
+- When committing and pushing changes, remember to see if we need to remove any production keys/secrets. If so, copy our production manifest to manifest.prod.json in the config folder, and replace our prod keys with space/nothing
