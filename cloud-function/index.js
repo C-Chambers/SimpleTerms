@@ -452,6 +452,38 @@ SCORE 9-10 (Extreme Risk):
 - No security measures mentioned
 - Example: "We own all your data forever. No deletion. Sell to highest bidder."
 
+GDPR COMPLIANCE CRITERIA (Premium Feature):${isPremium ? `
+
+ACCESS RIGHTS - "compliant":
+- Explicit statement of right to access personal data
+- Clear process for making access requests (contact method)
+- Specified response timeframe (within 30 days)
+- Confirmation available when no data is stored
+
+RECTIFICATION - "compliant": 
+- Right to correct inaccurate data explicitly stated
+- Clear process for requesting corrections
+- Response timeframe specified
+- Investigation process described
+
+ERASURE - "compliant":
+- Right to deletion/erasure explicitly mentioned
+- Clear deletion process described
+- No data retention means deletion not needed (acceptable)
+
+PORTABILITY - "compliant":
+- Right to data portability mentioned
+- Structured format delivery described
+- No stored data means no portability needed (acceptable)
+
+CONSENT - "compliant":
+- Clear consent mechanisms described
+- Withdrawal process explicitly stated
+- Specific consent for processing activities
+- Easy opt-out methods provided
+
+Use "partial" if some but not all criteria met. Use "non-compliant" if criteria missing.` : ''}
+
 CONSISTENCY REQUIREMENTS:
 - Same policy text MUST always get same score (±1 maximum variation)
 - Score must align with bullet points content

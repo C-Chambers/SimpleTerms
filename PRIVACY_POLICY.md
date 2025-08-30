@@ -162,7 +162,15 @@ Your withdrawal of consent does not affect the lawfulness of processing based on
 If you are in the European Economic Area (EEA), you have the following rights:
 
 ### Right to Access
-You have the right to request access to any personal data we process about you. Since we do not store any personal data, we can confirm that no personal data associated with your identity exists in our systems. You may request this confirmation by contacting us using the information below.
+You have the explicit right to request access to any personal data we process about you. To exercise this right:
+
+**Access Request Process:**
+1. Contact us via email at privacy@simpleterms.io or dpo@simpleterms.io
+2. Include your request details and any relevant information
+3. We will respond within 30 days as required by GDPR
+4. We will provide confirmation that no personal data associated with your identity exists in our systems
+
+Since SimpleTerms does not store any personal data on our servers, we can immediately confirm that no personal data associated with your identity exists in our systems. This confirmation will be provided free of charge and within the required timeframe.
 
 ### Right to Rectification  
 You have the right to request correction of any inaccurate personal data. As we do not store personal data, there is no stored data to rectify. However, if you believe any processing is inaccurate, please contact us and we will investigate and respond within 30 days.
