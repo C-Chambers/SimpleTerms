@@ -52,7 +52,7 @@ node_modules/
 
 # Build outputs and artifacts
 dist/
-build/
+builds/
 *.zip
 *.tar.gz
 *.crx
@@ -64,11 +64,11 @@ build/
 *_backup.*
 
 # Chrome extension distribution files
-manifest.prod.json
-SimpleTerms-v*.zip
-*-production*.zip
-*-FINAL*.zip
-*-FIXED*.zip
+config/manifest.prod.json
+builds/SimpleTerms-v*.zip
+builds/*-production*.zip
+builds/*-FINAL*.zip
+builds/*-FIXED*.zip
 
 # Store submission assets
 store-assets/

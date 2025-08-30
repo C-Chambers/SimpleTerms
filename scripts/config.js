@@ -16,6 +16,13 @@ const SimpleTermsConfig = {
         url: 'https://us-central1-simpleterms-backend.cloudfunctions.net/analyzePrivacyPolicy'
     },
     
+    // Development Configuration
+    development: {
+        // Set to true to make Pro features free during development/testing
+        // IMPORTANT: Set to false before production deployment
+        freeProFeatures: true
+    },
+    
     // Feature Flags
     features: {
         // Enable GDPR compliance analysis (Pro feature)

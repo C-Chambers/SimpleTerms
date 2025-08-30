@@ -33,9 +33,9 @@ npm run test:categorize
 ### Build & Deployment
 ```bash
 # Build production version
-node build-production.js
+node builds/build-production.js
 
-# This creates manifest.prod.json with production keys
+# This creates config/manifest.prod.json with production keys
 # Manual steps for Chrome Web Store submission are then required
 ```
 
@@ -89,8 +89,8 @@ The extension requires:
 ### Configuration Files
 
 - `manifest.json` - Development manifest
-- `manifest.prod.json` - Production manifest (generated)
-- `jest.config.js` - Test configuration with 3-minute timeout for e2e tests
+- `config/manifest.prod.json` - Production manifest (generated)
+- `config/jest.config.js` - Test configuration with 3-minute timeout for e2e tests
 - Package supports both unit tests (10s timeout) and e2e tests (180s timeout)
 
 ### Cloud Function Integration
@@ -99,3 +99,4 @@ The extension communicates with a Google Cloud Function at:
 `https://us-central1-simpleterms-backend.cloudfunctions.net/analyzePrivacyPolicy`
 
 For local development, the cloud function needs to be deployed separately with proper CORS configuration for testing.
+- When running tests, remember to run the static site test suite (npm run test:static) and not EVERY test (npm test)

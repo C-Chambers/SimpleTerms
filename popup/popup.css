@@ -5,10 +5,92 @@
     box-sizing: border-box;
 }
 
+/* CSS Variables for theming */
+:root {
+    /* Light theme variables */
+    --bg-primary: #f8f9fa;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e9ecef;
+    --text-primary: #333;
+    --text-secondary: #6c757d;
+    --text-tertiary: #495057;
+    --border-color: rgba(0, 0, 0, 0.1);
+    --border-color-light: #e9ecef;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --shadow-light: rgba(0, 0, 0, 0.05);
+    
+    /* UI element colors */
+    --usage-bg: #fff3cd;
+    --usage-text: #856404;
+    --usage-border: #ffeaa7;
+    --loading-bg: #f3f3f3;
+    --loading-border: #667eea;
+    --error-bg: #fdf2f2;
+    --error-text: #e74c3c;
+    --error-border: #fecaca;
+    --success-bg: #f0f9ff;
+    --success-border: #b3e5fc;
+    --no-policy-bg: #fffbeb;
+    --no-policy-text: #92400e;
+    --no-policy-border: #fed7aa;
+    
+    /* GDPR compliance colors */
+    --gdpr-bg: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    --gdpr-border: #bbdefb;
+    --gdpr-title: #1565c0;
+    --gdpr-item-border: rgba(187, 222, 251, 0.5);
+    
+    /* Tab colors */
+    --tab-border: #e9ecef;
+    --tab-hover-bg: #f8f9fa;
+    --tab-hover-text: #495057;
+}
+
+/* Dark theme variables */
+[data-theme="dark"] {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-tertiary: #3a3a3a;
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --text-tertiary: #d0d0d0;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --border-color-light: #3a3a3a;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --shadow-light: rgba(0, 0, 0, 0.2);
+    
+    /* UI element colors for dark mode */
+    --usage-bg: #3d3000;
+    --usage-text: #ffeb3b;
+    --usage-border: #5d4f00;
+    --loading-bg: #404040;
+    --loading-border: #667eea;
+    --error-bg: #2d1b1b;
+    --error-text: #ff6b6b;
+    --error-border: #4a2c2c;
+    --success-bg: #1a2332;
+    --success-border: #2196f3;
+    --no-policy-bg: #332d1a;
+    --no-policy-text: #ffa726;
+    --no-policy-border: #4a3d1a;
+    
+    /* GDPR compliance colors for dark mode */
+    --gdpr-bg: linear-gradient(135deg, #1a2332 0%, #2d1b2d 100%);
+    --gdpr-border: #2196f3;
+    --gdpr-title: #64b5f6;
+    --gdpr-item-border: rgba(33, 150, 243, 0.2);
+    
+    /* Tab colors for dark mode */
+    --tab-border: #3a3a3a;
+    --tab-hover-bg: #404040;
+    --tab-hover-text: #e0e0e0;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background-color: #f8f9fa;
-    color: #333;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Main container */
@@ -18,16 +100,64 @@ body {
     text-align: center;
 }
 
+/* Dark mode toggle button */
+.theme-toggle {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color-light);
+    border-radius: 20px;
+    width: 40px;
+    height: 22px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.theme-toggle:hover {
+    border-color: var(--text-secondary);
+}
+
+.theme-toggle-switch {
+    width: 18px;
+    height: 18px;
+    background: var(--text-secondary);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    transform: translateX(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+[data-theme="dark"] .theme-toggle-switch {
+    transform: translateX(18px);
+}
+
 /* Subscription Header */
 .subscription-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
     margin-bottom: 15px;
     padding: 10px;
-    background-color: white;
+    background-color: var(--bg-secondary);
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px var(--shadow-light);
+    transition: all 0.3s ease;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
 }
 
 .plan-badge {
@@ -40,8 +170,8 @@ body {
 }
 
 .plan-badge.free {
-    background-color: #e9ecef;
-    color: #6c757d;
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
 }
 
 .plan-badge.pro {
@@ -50,8 +180,8 @@ body {
 }
 
 .plan-badge.loading {
-    background-color: #f8f9fa;
-    color: #adb5bd;
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
 }
 
 .subscription-actions {
@@ -91,14 +221,15 @@ body {
 
 /* Usage Counter */
 .usage-counter {
-    background-color: #fff3cd;
-    color: #856404;
+    background-color: var(--usage-bg);
+    color: var(--usage-text);
     padding: 8px 12px;
     border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
     margin-bottom: 15px;
-    border: 1px solid #ffeaa7;
+    border: 1px solid var(--usage-border);
+    transition: all 0.3s ease;
 }
 
 /* Premium Teaser */
@@ -144,9 +275,6 @@ body {
 
 /* Pro Feature Badge */
 .pro-feature-badge {
-    position: absolute;
-    top: -8px;
-    right: -8px;
     background: linear-gradient(135deg, #ffd700 0%, #ffed4a 100%);
     color: #333;
     font-size: 10px;
@@ -154,16 +282,17 @@ body {
     padding: 4px 8px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
-    z-index: 10;
+    white-space: nowrap;
 }
 
 /* Heading */
 h1 {
     font-size: 24px;
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--text-primary);
     margin-bottom: 20px;
     letter-spacing: -0.5px;
+    transition: color 0.3s ease;
 }
 
 /* Analyze button */
@@ -204,9 +333,10 @@ h1 {
     min-height: 50px;
     padding: 15px;
     border-radius: 8px;
-    background-color: white;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background-color: var(--bg-secondary);
+    box-shadow: 0 2px 10px var(--shadow-color);
     text-align: left;
+    transition: all 0.3s ease;
 }
 
 /* Loading spinner animation */
@@ -221,8 +351,8 @@ h1 {
     content: '';
     width: 30px;
     height: 30px;
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #667eea;
+    border: 3px solid var(--loading-bg);
+    border-top: 3px solid var(--loading-border);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -272,8 +402,9 @@ h1 {
 .summary-title {
     font-size: 14px;
     font-weight: 600;
-    color: #495057;
+    color: var(--text-tertiary);
     margin-bottom: 8px;
+    transition: color 0.3s ease;
 }
 
 .summary-list {
@@ -285,10 +416,11 @@ h1 {
 .summary-list li {
     font-size: 12px;
     line-height: 1.4;
-    color: #333;
+    color: var(--text-primary);
     margin-bottom: 6px;
     padding-left: 12px;
     position: relative;
+    transition: color 0.3s ease;
 }
 
 .summary-list li:before {
@@ -308,7 +440,8 @@ h1 {
     display: flex;
     gap: 8px;
     padding: 10px 0;
-    border-bottom: 2px solid #e9ecef;
+    border-bottom: 2px solid var(--tab-border);
+    transition: border-color 0.3s ease;
 }
 
 .tab-button {
@@ -318,7 +451,7 @@ h1 {
     padding: 8px 12px;
     font-size: 13px;
     font-weight: 500;
-    color: #6c757d;
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.3s ease;
     border-radius: 6px 6px 0 0;
@@ -330,8 +463,8 @@ h1 {
 }
 
 .tab-button:hover {
-    background-color: #f8f9fa;
-    color: #495057;
+    background-color: var(--tab-hover-bg);
+    color: var(--tab-hover-text);
 }
 
 .tab-button.active {
@@ -372,23 +505,25 @@ h1 {
 
 /* GDPR Compliance Section */
 .gdpr-compliance {
-    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-    border: 1px solid #bbdefb;
+    background: var(--gdpr-bg);
+    border: 1px solid var(--gdpr-border);
     border-radius: 8px;
     padding: 15px;
     margin: 15px 0;
     text-align: center;
+    transition: all 0.3s ease;
 }
 
 .gdpr-title {
     font-size: 14px;
     font-weight: 600;
-    color: #1565c0;
+    color: var(--gdpr-title);
     margin-bottom: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 5px;
+    transition: color 0.3s ease;
 }
 
 .gdpr-score {
@@ -424,7 +559,8 @@ h1 {
 
 .gdpr-details .compliance-item {
     font-weight: 500;
-    color: #424242;
+    color: var(--text-tertiary);
+    transition: color 0.3s ease;
 }
 
 .gdpr-details .compliance-status {
@@ -475,41 +611,45 @@ h1 {
 }
 
 .error {
-    color: #e74c3c;
-    background-color: #fdf2f2;
-    border: 1px solid #fecaca;
+    color: var(--error-text);
+    background-color: var(--error-bg);
+    border: 1px solid var(--error-border);
     border-radius: 6px;
     padding: 10px;
     margin-top: 10px;
+    transition: all 0.3s ease;
 }
 
 .success {
     color: #27ae60;
-    background-color: #f0f9ff;
-    border: 1px solid #b3e5fc;
+    background-color: var(--success-bg);
+    border: 1px solid var(--success-border);
     border-radius: 6px;
     padding: 10px;
     margin-top: 10px;
+    transition: all 0.3s ease;
 }
 
 .error-message {
-    background-color: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #dc2626;
+    background-color: var(--error-bg);
+    border: 1px solid var(--error-border);
+    color: var(--error-text);
     padding: 12px;
     border-radius: 6px;
     font-size: 13px;
     text-align: center;
+    transition: all 0.3s ease;
 }
 
 .no-policy-message {
-    background-color: #fffbeb;
-    border: 1px solid #fed7aa;
-    color: #92400e;
+    background-color: var(--no-policy-bg);
+    border: 1px solid var(--no-policy-border);
+    color: var(--no-policy-text);
     padding: 12px;
     border-radius: 6px;
     font-size: 13px;
     text-align: center;
+    transition: all 0.3s ease;
 }
 
 .loading {
@@ -522,8 +662,8 @@ h1 {
 .spinner {
     width: 24px;
     height: 24px;
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #667eea;
+    border: 3px solid var(--loading-bg);
+    border-top: 3px solid var(--loading-border);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }

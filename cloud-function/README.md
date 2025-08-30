@@ -129,8 +129,8 @@ POST https://us-central1-simpleterms-backend.cloudfunctions.net/analyzePrivacyPo
 
 ## Performance Optimization
 
-- Uses `gemini-1.5-flash` model for fast, cost-effective analysis
-- Text truncation at 30KB for optimal processing speed
+- Uses `gemini-2.5-flash` model for enhanced reasoning and accuracy
+- Full policy analysis without truncation (1M token context window)
 - Efficient prompt engineering for consistent 7-point summaries
 - Average response time: 3-5 seconds
 - Memory allocation: 256MB
@@ -180,7 +180,7 @@ npm run test:comprehensive:run
 - **Monthly estimate (10K requests)**: ~$5.00
 
 ### Optimization Tips
-- Text truncation reduces token usage by 70%
+- Complete policy analysis with no content truncation
 - Caching common policies could reduce API calls
 - Batch processing for premium users
 

@@ -10,7 +10,19 @@
     <div class="main-container">
         <!-- Subscription Status Header -->
         <div id="subscriptionHeader" class="subscription-header">
-            <div class="plan-badge" id="planBadge">Loading...</div>
+            <div class="header-left">
+                <div class="plan-badge" id="planBadge">Loading...</div>
+                <!-- Pro Feature Badge -->
+                <div id="proFeatureBadge" class="pro-feature-badge" style="display: none;">
+                    ✨ Pro Analysis
+                </div>
+            </div>
+            <div class="header-right">
+                <!-- Dark Mode Toggle -->
+                <button id="themeToggle" class="theme-toggle" title="Toggle Dark Mode">
+                    <div class="theme-toggle-switch">🌙</div>
+                </button>
+            </div>
             <div class="subscription-actions" id="subscriptionActions" style="display: none;">
                 <button id="upgradeButton" class="upgrade-btn">Upgrade to Pro</button>
                 <button id="loginButton" class="login-btn">Already have Pro?</button>
@@ -40,10 +52,6 @@
         </div>
         <div id="resultsContainer"></div>
 
-        <!-- Pro Feature Badge -->
-        <div id="proFeatureBadge" class="pro-feature-badge" style="display: none;">
-            ✨ Pro Analysis
-        </div>
     </div>
     <script src="../scripts/config.js"></script>
     <script src="../scripts/ExtPay.js"></script>

@@ -103,14 +103,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             // Get complete user subscription information
             extpay.getUser()
                 .then(user => {
+                    // Check development mode to simulate Pro features for free
+                    const isPro = user.paid || (SimpleTermsConfig.development && SimpleTermsConfig.development.freeProFeatures);
+                    
                     const userInfo = {
-                        paid: user.paid || false,
+                        paid: isPro,
                         installedAt: user.installedAt,
-                        subscriptionStatus: user.subscriptionStatus || (user.paid ? 'active' : 'free'),
+                        subscriptionStatus: user.subscriptionStatus || (isPro ? 'active' : 'free'),
                         subscriptionCancelAt: user.subscriptionCancelAt || null,
                         trialStartedAt: user.trialStartedAt,
                         email: user.email || null,
-                        plan: user.paid ? 'Pro' : 'Free'
+                        plan: isPro ? 'Pro' : 'Free'
                     };
                     sendResponse({ success: true, userInfo: userInfo });
                 })

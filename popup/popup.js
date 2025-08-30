@@ -9,6 +9,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabsContainer = document.getElementById('tabsContainer');
     const tabButtons = document.getElementById('tabButtons');
     
+    // Theme toggle elements
+    const themeToggle = document.getElementById('themeToggle');
+    const themeToggleSwitch = themeToggle.querySelector('.theme-toggle-switch');
+    
     // Pro tier elements
     const planBadge = document.getElementById('planBadge');
     const subscriptionActions = document.getElementById('subscriptionActions');
@@ -25,6 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentTabIndex = 0;
     let userSubscriptionInfo = { paid: false, plan: 'Free' };
     let dailyUsageCount = 0;
+    let currentTheme = 'light'; // Default theme
     
     // Load configuration from config.js
     const config = window.SimpleTermsConfig || {
@@ -38,6 +43,80 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize the extension on load
     initializeExtension();
 
+    /**
+     * Theme Management Functions
+     */
+    
+    /**
+     * Load saved theme preference from storage
+     */
+    async function loadThemePreference() {
+        return new Promise((resolve) => {
+            chrome.storage.sync.get(['themePreference'], (data) => {
+                const savedTheme = data.themePreference || 'light';
+                currentTheme = savedTheme;
+                applyTheme(savedTheme);
+                updateThemeToggleUI(savedTheme);
+                resolve(savedTheme);
+            });
+        });
+    }
+
+    /**
+     * Save theme preference to storage
+     */
+    async function saveThemePreference(theme) {
+        return new Promise((resolve) => {
+            chrome.storage.sync.set({ themePreference: theme }, () => {
+                resolve();
+            });
+        });
+    }
+
+    /**
+     * Apply theme to the document
+     */
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+        currentTheme = theme;
+    }
+
+    /**
+     * Update theme toggle button UI
+     */
+    function updateThemeToggleUI(theme) {
+        if (theme === 'dark') {
+            themeToggleSwitch.textContent = '☀️';
+            themeToggle.title = 'Switch to Light Mode';
+        } else {
+            themeToggleSwitch.textContent = '🌙';
+            themeToggle.title = 'Switch to Dark Mode';
+        }
+    }
+
+    /**
+     * Toggle between light and dark themes
+     */
+    function toggleTheme() {
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        applyTheme(newTheme);
+        updateThemeToggleUI(newTheme);
+        saveThemePreference(newTheme);
+        
+        // Add a subtle animation feedback
+        themeToggle.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            themeToggle.style.transform = 'scale(1)';
+        }, 150);
+    }
+
+    // Theme toggle event listener
+    themeToggle.addEventListener('click', toggleTheme);
+
     // Security: HTML escape function to prevent XSS
     function escapeHtml(text) {
         const div = document.createElement('div');
@@ -50,6 +129,9 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     async function initializeExtension() {
         try {
+            // Load theme preference first (for immediate UI update)
+            await loadThemePreference();
+            
             // Load subscription info and daily usage
             await loadUserSubscriptionInfo();
             await loadDailyUsage();
@@ -65,6 +147,12 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error initializing extension:', error);
             // Default to free tier on error
             updateSubscriptionUI();
+            // Still load theme preference even if other initialization fails
+            try {
+                await loadThemePreference();
+            } catch (themeError) {
+                console.error('Error loading theme preference:', themeError);
+            }
         }
     }
 
@@ -74,14 +162,17 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadUserSubscriptionInfo() {
         try {
             const user = await extpay.getUser();
+            // Check development mode to simulate Pro features for free
+            const isPro = user.paid || (config.development && config.development.freeProFeatures);
+            
             userSubscriptionInfo = {
-                paid: user.paid || false,
+                paid: isPro,
                 installedAt: user.installedAt,
-                subscriptionStatus: user.subscriptionStatus || (user.paid ? 'active' : 'free'),
+                subscriptionStatus: user.subscriptionStatus || (isPro ? 'active' : 'free'),
                 subscriptionCancelAt: user.subscriptionCancelAt || null,
                 trialStartedAt: user.trialStartedAt,
                 email: user.email || null,
-                plan: user.paid ? 'Pro' : 'Free'
+                plan: isPro ? 'Pro' : 'Free'
             };
             return userSubscriptionInfo;
         } catch (error) {

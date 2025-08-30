@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(git checkout:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "WebSearch",
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(node:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm i:*)",
+      "Bash(npm cache clean:*)"
     ],
     "deny": [],
     "ask": []
