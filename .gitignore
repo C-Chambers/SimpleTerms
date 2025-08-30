@@ -98,3 +98,6 @@ test-results/
 local/
 temp/
 tmp/
+
+# Policy Compliance Overview folder
+Policy Compliance Overview/

@@ -43,11 +43,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load configuration from config.js
     const config = window.SimpleTermsConfig || {
         features: { dailyAnalysisLimit: 5 },
-        cloudFunction: { url: 'https://us-central1-simpleterms-backend.cloudfunctions.net/analyzePrivacyPolicy' }
+        cloudFunction: { url: 'https://us-central1-simpleterms-backend.cloudfunctions.net/analyzePrivacyPolicy' },
+        development: { freeProFeatures: false } // Default to false if config not loaded
     };
     
     const DAILY_USAGE_LIMIT = config.features.dailyAnalysisLimit;
     const CLOUD_FUNCTION_URL = config.cloudFunction.url;
+    
+    // Debug: Log config state
+    console.log('SimpleTerms Config loaded:', {
+        freeProFeatures: config.development?.freeProFeatures,
+        configSource: window.SimpleTermsConfig ? 'loaded' : 'fallback'
+    });
 
     // Initialize the extension on load
     initializeExtension();
@@ -141,11 +148,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         currentAnalysisType = newAnalysisType;
         
-        // Check if user has access to GDPR analysis
-        if (currentAnalysisType === 'gdpr' && !userSubscriptionInfo.paid) {
-            // Show locked GDPR analysis for free users
-            showLockedGDPRAnalysis();
-            return;
+        // SECURITY: Check if user has access to GDPR analysis
+        if (currentAnalysisType === 'gdpr') {
+            // Double-check subscription status to prevent console manipulation
+            const isReallyPro = userSubscriptionInfo && userSubscriptionInfo.paid === true;
+            const isDevelopmentMode = config.development && config.development.freeProFeatures === true;
+            
+            if (!isReallyPro && !isDevelopmentMode) {
+                // Reset selection and show locked message
+                analysisTypeSelect.value = 'standard';
+                currentAnalysisType = 'standard';
+                showLockedGDPRAnalysis();
+                return;
+            }
         }
         
         // Re-analyze with new analysis type
@@ -565,7 +580,21 @@ document.addEventListener('DOMContentLoaded', function() {
      * @returns {Object} GDPR compliance analysis
      */
     function generateGDPRCompliance(policyText, privacyScore) {
-        if (!userSubscriptionInfo.paid) {
+        // SECURITY: Detect if function is being called directly from console
+        const stack = new Error().stack;
+        const isDirectCall = !stack.includes('handleAnalysisTypeChange') && 
+                           !stack.includes('analyzeWithGDPR') && 
+                           !stack.includes('performAnalysisWithType');
+        
+        if (isDirectCall) {
+            console.warn('SECURITY: Direct call to generateGDPRCompliance detected - potential bypass attempt');
+        }
+        // SECURITY: Enhanced validation to prevent bypass attempts
+        const isReallyPro = userSubscriptionInfo && userSubscriptionInfo.paid === true;
+        const isDevelopmentMode = config.development && config.development.freeProFeatures === true;
+        
+        if (!isReallyPro && !isDevelopmentMode) {
+            console.warn('SECURITY: Unauthorized attempt to access GDPR analysis');
             return null; // Free users don't get GDPR analysis
         }
 
@@ -642,10 +671,14 @@ document.addEventListener('DOMContentLoaded', function() {
     async function analyzeWithGDPR(policyText) {
         const analysisResult = await analyzeWithCloudFunction(policyText);
         
-        // Add GDPR compliance for Pro users
-        if (userSubscriptionInfo.paid) {
+        // SECURITY: Add GDPR compliance only for verified Pro users
+        const isReallyPro = userSubscriptionInfo && userSubscriptionInfo.paid === true;
+        const isDevelopmentMode = config.development && config.development.freeProFeatures === true;
+        
+        if (isReallyPro || isDevelopmentMode) {
             analysisResult.gdprCompliance = generateGDPRCompliance(policyText, analysisResult.score);
         } else {
+            console.warn('SECURITY: Unauthorized attempt to access GDPR analysis via analyzeWithGDPR');
             analysisResult.gdprCompliance = null; // Show locked section for free users
         }
         
@@ -767,6 +800,13 @@ document.addEventListener('DOMContentLoaded', function() {
             analyzeButton.disabled = true;
             analyzeButton.textContent = 'Analyzing...';
             showLoading();
+            
+            // Reset unified analysis state at the start of new analysis
+            currentPolicyData = null;
+            lastAnalysisResult = null;
+            currentAnalysisType = 'standard';
+            analysisTypeSelect.value = 'standard';
+            analysisTypeContainer.style.display = 'none';
 
             // Increment usage count for free users
             await incrementUsageCount();
@@ -978,6 +1018,28 @@ document.addEventListener('DOMContentLoaded', function() {
             // Display results in the specific tab
             displayResultsInTab(analysisResult.score, analysisResult.summary, policy.url, tabIndex, policy.text, analysisResult.gdprCompliance);
             
+            // Show dropdown after first tab analysis completes (for Pro users or testing)
+            if (tabIndex === 0) {
+                const isProUser = userSubscriptionInfo.paid;
+                const isTestingMode = config.development && config.development.freeProFeatures;
+                console.log('Multi-tab first analysis dropdown check:', { 
+                    isProUser, 
+                    isTestingMode, 
+                    development: config.development,
+                    userInfo: userSubscriptionInfo 
+                });
+                if (isProUser || isTestingMode) {
+                    analysisTypeContainer.style.display = 'block';
+                    console.log('Multi-tab dropdown shown');
+                    
+                    // Store data for re-analysis
+                    currentPolicyData = { text: policyText, url: policy.url };
+                    lastAnalysisResult = analysisResult;
+                } else {
+                    console.log('Multi-tab dropdown hidden');
+                }
+            }
+            
         } catch (error) {
             console.error(`Error analyzing policy for tab ${tabIndex}:`, error);
             displayErrorInTab(error.message || 'Failed to analyze this privacy policy', tabIndex);
@@ -1059,8 +1121,21 @@ document.addEventListener('DOMContentLoaded', function() {
             currentPolicyData = { content: message.content, url: message.url, confidence: message.confidence };
             lastAnalysisResult = analysisResult;
             
-            // Show analysis type selector
-            analysisTypeContainer.style.display = 'block';
+            // Show analysis type selector (for Pro users or during testing)
+            const isProUser = userSubscriptionInfo.paid;
+            const isTestingMode = config.development && config.development.freeProFeatures;
+            console.log('Dropdown visibility check:', { 
+                isProUser, 
+                isTestingMode, 
+                development: config.development,
+                userInfo: userSubscriptionInfo 
+            });
+            if (isProUser || isTestingMode) {
+                analysisTypeContainer.style.display = 'block';
+                console.log('Dropdown shown');
+            } else {
+                console.log('Dropdown hidden');
+            }
             
             // Display results with current page indication
             displayCurrentPageUnifiedResults(analysisResult.score, analysisResult.summary, message.url, message.confidence, 'standard');
@@ -1117,8 +1192,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         currentPolicyData = { text: dynamicContent, url: policyUrl };
                         lastAnalysisResult = analysisResult;
                         
-                        // Show analysis type selector
-                        analysisTypeContainer.style.display = 'block';
+                        // Show analysis type selector (for Pro users or during testing)
+                        const isProUser = userSubscriptionInfo.paid;
+                        const isTestingMode = config.development && config.development.freeProFeatures;
+                        console.log('Multi-tab dropdown visibility check:', { 
+                            isProUser, 
+                            isTestingMode, 
+                            development: config.development,
+                            userInfo: userSubscriptionInfo 
+                        });
+                        if (isProUser || isTestingMode) {
+                            analysisTypeContainer.style.display = 'block';
+                            console.log('Multi-tab dropdown shown');
+                        } else {
+                            console.log('Multi-tab dropdown hidden');
+                        }
                         
                         // Display results using unified interface
                         displayUnifiedResults(analysisResult.score, analysisResult.summary, policyUrl, null, 'standard');
@@ -1142,8 +1230,12 @@ document.addEventListener('DOMContentLoaded', function() {
             currentPolicyData = { text: policyText, url: policyUrl };
             lastAnalysisResult = analysisResult;
             
-            // Show analysis type selector
-            analysisTypeContainer.style.display = 'block';
+            // Show analysis type selector (for Pro users or during testing)
+            const isProUser = userSubscriptionInfo.paid;
+            const isTestingMode = config.development && config.development.freeProFeatures;
+            if (isProUser || isTestingMode) {
+                analysisTypeContainer.style.display = 'block';
+            }
             
             // Display results using unified interface
             displayUnifiedResults(analysisResult.score, analysisResult.summary, policyUrl, null, 'standard');
@@ -1449,11 +1541,6 @@ document.addEventListener('DOMContentLoaded', function() {
         currentTabIndex = 0;
         tabsContainer.style.display = 'none';
         tabButtons.innerHTML = '';
-        // Reset unified analysis state
-        currentPolicyData = null;
-        lastAnalysisResult = null;
-        currentAnalysisType = 'standard';
-        analysisTypeSelect.value = 'standard';
-        analysisTypeContainer.style.display = 'none';
+        // Note: We don't reset unified analysis state here since we want to keep the dropdown visible after analysis
     }
 });

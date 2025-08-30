@@ -181,6 +181,18 @@ exports.analyzePrivacyPolicy = async (req, res) => {
 
     // Check if premium features are requested (for Pro users)
     const isPremiumRequest = includePremiumFeatures === true;
+    
+    // SECURITY TODO: Add proper server-side subscription validation
+    // Currently this relies on client-side validation which can be bypassed
+    // Should validate user subscription with ExtensionPay API before processing premium requests
+    if (isPremiumRequest) {
+        // For now, log premium requests for monitoring potential abuse
+        console.log('Premium analysis request received - Client-side validation only');
+        // TODO: Implement server-side validation:
+        // 1. Extract user ID from authenticated request
+        // 2. Validate subscription status with ExtensionPay API
+        // 3. Return 403 if user doesn't have premium subscription
+    }
 
     // Check text length to prevent abuse (keeping reasonable limit for very large documents)
     if (policyText.length > 1000000) { // 1MB limit - allows for very comprehensive policies
