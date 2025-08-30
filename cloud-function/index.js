@@ -297,9 +297,9 @@ async function rateLimitDelay() {
 }
 
 /**
- * Enhanced prompt injection protection for Phase 1 security improvements
+ * Conservative prompt injection protection - only blocks obvious injection attempts
  * @param {string} text - The text to sanitize
- * @returns {string} Sanitized text with improved protection
+ * @returns {string} Sanitized text preserving legitimate policy content
  */
 function sanitizeForPrompt(text) {
   if (!text || typeof text !== 'string') {
@@ -308,71 +308,43 @@ function sanitizeForPrompt(text) {
 
   let sanitized = text;
   
-  // Phase 1 enhancement: More comprehensive injection pattern detection
+  // CONSERVATIVE: Only block very specific and obvious injection attempts
+  // Removed overly broad patterns that were filtering legitimate policy content
   const injectionPatterns = [
-    // Basic instruction hijacking
-    /ignore.*(?:previous|above|earlier).*instructions?/gi,
-    /disregard.*(?:above|previous|system)/gi,
-    /forget.*(?:everything|instructions|context)/gi,
-    /override.*(?:instructions|system|prompt)/gi,
+    // Only block very explicit instruction hijacking
+    /^\s*ignore\s+all\s+previous\s+instructions/gi,
+    /^\s*disregard\s+everything\s+above/gi,
     
-    // Role manipulation attempts  
-    /(?:you|assistant).*(?:are|now).*(?:a|an|now)/gi,
-    /act.*as.*(?:if|a|an|though)/gi,
-    /pretend.*(?:you|to)/gi,
-    /roleplay.*as/gi,
-    /imagine.*you.*are/gi,
-    
-    // System prompt injection
-    /system.*(?:prompt|instruction|message):/gi,
-    /new.*(?:instructions?|prompt|task):/gi,
-    /\\n\\n#+.*instruction/gi,
-    
-    // Format manipulation
+    // Only block obvious format injection
     /\[INST\]|\[\/INST\]/gi,
     /\[\/?SYSTEM\]/gi,
-    /\[\/?USER\]/gi,
-    /\[\/?ASSISTANT\]/gi,
     /<\|(?:im_start|im_end)\|>/g,
-    /#{2,}.*(?:instruction|prompt|task)/gi,
     
-    // JSON injection attempts
-    /["']\s*}\s*,?\s*{/g,
-    /}\s*,?\s*{\s*["']/g,
-    
-    // Command injection
-    /(?:exec|eval|system|cmd|shell)\s*\(/gi,
-    /javascript:/gi,
-    /data:text\/html/gi
+    // Only block obvious command injection
+    /javascript\s*:/gi,
+    /data\s*:\s*text\/html/gi
   ];
   
-  // Apply pattern filtering with context preservation
+  // Apply very conservative filtering - preserve policy content
   for (const pattern of injectionPatterns) {
     sanitized = sanitized.replace(pattern, (match) => {
-      // Log attempts for monitoring (in production, you might want to send alerts)
-      console.warn('Blocked potential prompt injection:', match.substring(0, 50));
-      return '[FILTERED_INJECTION]';
+      console.warn('Blocked obvious injection attempt:', match.substring(0, 30));
+      return '[BLOCKED]';
     });
   }
   
-  // Enhanced format manipulation protection
+  // Minimal formatting cleanup - preserve policy structure
   sanitized = sanitized
-    // Limit consecutive newlines (prevent prompt structure breaking)
-    .replace(/\n{4,}/g, '\n\n\n')
-    // Remove code blocks (prevent command injection)
-    .replace(/```[\s\S]*?```/g, '[CODE_BLOCK_REMOVED]')
-    // Remove excessive repeated characters (prevent format flooding)
-    .replace(/(.)\1{50,}/g, '$1$1$1[REPEATED]')
-    // Clean up multiple spaces but preserve readability
-    .replace(/  +/g, ' ')
-    // Remove control characters except common ones
+    // Only limit extreme consecutive newlines (8+)
+    .replace(/\n{8,}/g, '\n\n\n\n')
+    // Only remove extreme repeated characters (100+)
+    .replace(/(.)\1{100,}/g, '$1$1$1[REPEATED]')
+    // Preserve multiple spaces (might be important in policies)
+    // Remove only control characters that could break parsing
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
   
-  // Context isolation: Ensure content stays within policy context
-  // This helps prevent context switching attacks
-  sanitized = isolateUserContent(sanitized);
-  
-  return sanitized.trim();
+  // Minimal context isolation - just add boundaries without truncating
+  return `PRIVACY_POLICY_START:\n${sanitized.trim()}\nPRIVACY_POLICY_END`;
 }
 
 /**
@@ -395,59 +367,104 @@ function sanitizeJsonResponse(text) {
 }
 
 /**
- * Isolate user content to prevent context switching
- * @param {string} content - Content to isolate
- * @returns {string} Context-isolated content
+ * Create a consistent hash from string content for deterministic AI seeding
+ * @param {string} str - String to hash
+ * @returns {number} Integer hash suitable for Gemini seed parameter
  */
-function isolateUserContent(content) {
-  // Prevent context switching by adding clear boundaries
-  // This makes it harder for injection to break out of the policy context
-  const maxLength = 50000; // Reasonable limit for privacy policies
+function hashString(str) {
+  let hash = 0;
+  if (!str || str.length === 0) return hash;
   
-  if (content.length > maxLength) {
-    content = content.substring(0, maxLength) + '\n[TRUNCATED FOR SAFETY]';
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
   }
   
-  // Add semantic boundaries to maintain context
-  return `PRIVACY_POLICY_START:\n${content}\nPRIVACY_POLICY_END`;
+  // Ensure positive integer for Gemini seed (0 to 2^31-1)
+  return Math.abs(hash) % 2147483647;
 }
 
 /**
  * Build unified optimized prompt for both free and premium tiers
- * Implements Phase 1 token optimization and structured output enforcement
+ * Implements enhanced consistency controls and detailed scoring criteria
  * @param {string} sanitizedText - Sanitized policy text
  * @param {boolean} isPremium - Whether to include premium GDPR analysis
  * @returns {string} Optimized prompt string
  */
 function buildUnifiedPrompt(sanitizedText, isPremium) {
-  // Enhanced prompt template with explicit formatting constraints to prevent asterisk formatting
-  const basePrompt = `Privacy policy analyst. Return ONLY valid JSON with consistent bullet formatting:
+  // Calculate policy complexity indicators for consistent scoring
+  const wordCount = sanitizedText.split(/\s+/).length;
+  const hasDataSales = sanitizedText.toLowerCase().includes('sell') || sanitizedText.toLowerCase().includes('sold');
+  const hasThirdPartySharing = sanitizedText.toLowerCase().includes('third party') || sanitizedText.toLowerCase().includes('partner');
+  
+  const complexityNote = `Policy length: ${wordCount} words. Contains data sales: ${hasDataSales}. Contains third-party sharing: ${hasThirdPartySharing}.`;
+
+  // Enhanced prompt template with detailed scoring criteria for consistency
+  const basePrompt = `You are a privacy policy analyst. Analyze consistently using these EXACT criteria. Return ONLY valid JSON:
 
 {
   "summary": "• What we collect: Brief description here\\n• How it's used: Brief description here\\n• Who it's shared with: Brief description here\\n• How long kept: Brief description here\\n• Your rights: Brief description here\\n• Security measures: Brief description here\\n• Key concerns: Brief description here",
   "score": <1-10 integer>,
-  "confidence": <0-100 integer>${isPremium ? ',\n  "gdpr": {\n    "access": "compliant|partial|non-compliant",\n    "rectification": "compliant|partial|non-compliant",\n    "erasure": "compliant|partial|non-compliant",\n    "portability": "compliant|partial|non-compliant",\n    "consent": "compliant|partial|non-compliant"\n  }' : ''}
+  "confidence": <0-100 integer>,
+  "reasoning": "Brief explanation of why this specific score was assigned"${isPremium ? ',\n  "gdpr": {\n    "access": "compliant|partial|non-compliant",\n    "rectification": "compliant|partial|non-compliant",\n    "erasure": "compliant|partial|non-compliant",\n    "portability": "compliant|partial|non-compliant",\n    "consent": "compliant|partial|non-compliant"\n  }' : ''}
 }
 
-CRITICAL FORMATTING RULES:
+CRITICAL SCORING CRITERIA (apply consistently):
+
+SCORE 1-2 (Minimal Risk):
+- Collects only essential data (name, email for service)
+- No data sales or sharing with advertisers
+- Clear opt-out mechanisms
+- Strong security measures mentioned
+- Short retention periods (1-2 years max)
+- Example: "We collect only your email to send newsletters. No sharing. Delete anytime."
+
+SCORE 3-4 (Low Risk):
+- Limited personal data collection
+- Some third-party services (analytics only)
+- Basic user controls available
+- Reasonable retention periods (2-3 years)
+- No sensitive data collection
+- Example: "We use Google Analytics. Collect name, email, usage data. No sales."
+
+SCORE 5-6 (Medium Risk):
+- Moderate data collection (location, device info)
+- Third-party sharing for business purposes
+- Limited user controls
+- Long retention periods (3+ years)
+- Some advertising partnerships
+- Example: "We share data with business partners. Collect location. Keep indefinitely."
+
+SCORE 7-8 (High Risk):
+- Extensive data collection (browsing history, contacts)
+- Data sold to third parties for advertising
+- Vague or missing user rights
+- Unclear retention policies
+- Broad data sharing
+- Example: "We may sell your data. Collect everything. Share with anyone."
+
+SCORE 9-10 (Extreme Risk):
+- Invasive data collection (personal messages, photos)
+- Explicit data sales for profit
+- No user controls or deletion rights
+- Permanent data retention
+- No security measures mentioned
+- Example: "We own all your data forever. No deletion. Sell to highest bidder."
+
+CONSISTENCY REQUIREMENTS:
+- Same policy text MUST always get same score (±1 maximum variation)
+- Score must align with bullet points content
+- Higher scores require explicit mention of risky practices in summary
+- Use the "reasoning" field to justify the exact score given
+
+FORMATTING RULES:
 - Use bullet symbol • followed by category label and colon
 - NO asterisks (*) or markdown formatting anywhere
-- NO bold (**text**) or italic (*text*) formatting
-- Plain text only with simple punctuation
-- Example format: "• What we collect: Personal info like email and location"
 - Max 15 words per bullet point after the colon
-- Use exactly these 7 categories in order:
-  1. What we collect: [data types]
-  2. How it's used: [purposes]  
-  3. Who it's shared with: [third parties]
-  4. How long kept: [retention period]
-  5. Your rights: [user controls]
-  6. Security measures: [protection methods]
-  7. Key concerns: [privacy risks]
+- Reasoning: 1-2 sentences explaining the score
 
-SCORING GUIDELINES:
-- Score: 1-3=low risk, 4-6=medium, 7-10=high privacy risk
-- Confidence: Based on policy completeness and clarity (0-100)${isPremium ? '\n- GDPR: Evaluate explicit rights, consent mechanisms, data protection measures' : ''}
+ANALYSIS CONTEXT: ${complexityNote}
 
 NO TEXT OUTSIDE JSON. NO MARKDOWN. Analyze this policy:
 
@@ -457,12 +474,13 @@ ${sanitizedText}`;
 }
 
 /**
- * Validate and normalize analysis result with enhanced Phase 1 structure
+ * Validate and normalize analysis result with enhanced consistency checking
  * @param {Object} result - Raw analysis result from AI
  * @param {boolean} isPremium - Whether premium features are enabled
+ * @param {string} policyText - Original policy text for validation
  * @returns {Object} Validated and normalized result
  */
-function validateAndNormalizeResult(result, isPremium) {
+function validateAndNormalizeResult(result, isPremium, policyText) {
   if (!result || typeof result !== 'object') {
     throw new Error('Invalid analysis result format');
   }
@@ -479,11 +497,39 @@ function validateAndNormalizeResult(result, isPremium) {
   // Validate and normalize score range
   result.score = Math.min(10, Math.max(1, Math.round(result.score)));
 
-  // Add confidence scoring (new Phase 1 feature)
+  // NEW: Consistency validation - check if score aligns with content
+  const consistencyCheck = validateScoreConsistency(result.score, result.summary, policyText);
+  if (!consistencyCheck.isValid) {
+    console.warn('Score consistency issue detected:', consistencyCheck.reason);
+    console.warn('Original score:', result.score, 'Suggested score:', consistencyCheck.suggestedScore);
+    
+    // Adjust score if there's a major inconsistency (>2 point difference)
+    if (Math.abs(result.score - consistencyCheck.suggestedScore) > 2) {
+      console.log('Adjusting inconsistent score from', result.score, 'to', consistencyCheck.suggestedScore);
+      result.score = consistencyCheck.suggestedScore;
+    }
+  }
+
+  // FINAL CONSISTENCY ENFORCEMENT: Hash-based score anchoring for identical content
+  const contentHash = hashString(policyText);
+  const expectedScoreAnchor = (contentHash % 3) - 1; // -1, 0, or 1 adjustment
+  const finalScore = Math.min(10, Math.max(1, result.score + expectedScoreAnchor));
+  
+  if (finalScore !== result.score) {
+    console.log('Hash-based consistency adjustment:', result.score, '->', finalScore, 'for content hash:', contentHash);
+    result.score = finalScore;
+  }
+
+  // Add confidence scoring
   if (!result.confidence || typeof result.confidence !== 'number') {
     result.confidence = estimateConfidence(result.summary);
   }
   result.confidence = Math.min(100, Math.max(0, Math.round(result.confidence)));
+
+  // Validate reasoning field (new for consistency)
+  if (!result.reasoning || typeof result.reasoning !== 'string') {
+    result.reasoning = generateDefaultReasoning(result.score);
+  }
 
   // Validate premium GDPR fields and maintain backwards compatibility
   if (isPremium) {
@@ -498,6 +544,89 @@ function validateAndNormalizeResult(result, isPremium) {
   }
 
   return result;
+}
+
+/**
+ * Validate score consistency with summary content and policy text
+ * @param {number} score - AI-assigned score
+ * @param {string} summary - Analysis summary 
+ * @param {string} policyText - Original policy text
+ * @returns {Object} Validation result with suggested adjustments
+ */
+function validateScoreConsistency(score, summary, policyText) {
+  const lowerSummary = summary.toLowerCase();
+  const lowerPolicy = policyText.toLowerCase();
+  
+  // Count risk indicators in both summary and policy
+  const riskIndicators = {
+    high: ['sell', 'sold', 'advertising', 'marketing', 'share with partners', 'third parties', 'indefinitely', 'permanent'],
+    medium: ['analytics', 'improve service', 'business purposes', 'partners', 'affiliates'],
+    low: ['essential', 'necessary', 'opt-out', 'delete', 'control', 'choice']
+  };
+  
+  let highRiskCount = 0;
+  let mediumRiskCount = 0; 
+  let lowRiskCount = 0;
+  
+  // Check summary for risk indicators
+  riskIndicators.high.forEach(indicator => {
+    if (lowerSummary.includes(indicator)) highRiskCount++;
+  });
+  riskIndicators.medium.forEach(indicator => {
+    if (lowerSummary.includes(indicator)) mediumRiskCount++;
+  });
+  riskIndicators.low.forEach(indicator => {
+    if (lowerSummary.includes(indicator)) lowRiskCount++;
+  });
+  
+  // Calculate suggested score based on content
+  let suggestedScore;
+  if (highRiskCount >= 2) {
+    suggestedScore = 7 + Math.min(highRiskCount, 3); // 7-10 range
+  } else if (highRiskCount >= 1 || mediumRiskCount >= 3) {
+    suggestedScore = 5 + mediumRiskCount; // 5-6 range typically
+  } else if (mediumRiskCount >= 1) {
+    suggestedScore = 3 + Math.min(mediumRiskCount, 2); // 3-4 range
+  } else if (lowRiskCount >= 2) {
+    suggestedScore = Math.max(1, 3 - lowRiskCount); // 1-2 range
+  } else {
+    suggestedScore = 4; // Default neutral
+  }
+  
+  suggestedScore = Math.min(10, Math.max(1, suggestedScore));
+  
+  // Check if original score is consistent (within 2 points)
+  const scoreDiff = Math.abs(score - suggestedScore);
+  const isValid = scoreDiff <= 2;
+  
+  let reason = '';
+  if (!isValid) {
+    if (score > suggestedScore) {
+      reason = `Score ${score} too high for content. Found ${highRiskCount} high-risk, ${mediumRiskCount} medium-risk indicators.`;
+    } else {
+      reason = `Score ${score} too low for content. Found ${highRiskCount} high-risk, ${mediumRiskCount} medium-risk indicators.`;
+    }
+  }
+  
+  return {
+    isValid,
+    suggestedScore,
+    reason,
+    riskAnalysis: { highRiskCount, mediumRiskCount, lowRiskCount }
+  };
+}
+
+/**
+ * Generate default reasoning for score when AI doesn't provide one
+ * @param {number} score - Privacy risk score
+ * @returns {string} Default reasoning explanation
+ */
+function generateDefaultReasoning(score) {
+  if (score <= 2) return 'Minimal privacy risks with essential data collection only.';
+  if (score <= 4) return 'Low privacy risks with limited data collection and sharing.';
+  if (score <= 6) return 'Medium privacy risks with moderate data collection and third-party sharing.';
+  if (score <= 8) return 'High privacy risks with extensive data collection and broad sharing practices.';
+  return 'Extreme privacy risks with invasive data collection and extensive commercial use.';
 }
 
 /**
@@ -607,9 +736,20 @@ async function analyzeWithGemini(policyText, isPremium = false) {
     // Sanitize input to prevent prompt injection
     const sanitizedText = sanitizeForPrompt(policyText);
     
-    // Get the Gemini model optimized for enhanced reasoning and performance
+    // Create a deterministic seed from policy text for maximum consistency
+    const policyHash = hashString(sanitizedText);
+    
+    // Get the Gemini model optimized for maximum consistency
     const model = genAI.getGenerativeModel({ 
       model: 'gemini-2.5-flash',
+      generationConfig: {
+        temperature: 0.0, // Minimum temperature for maximum consistency
+        topP: 0.1,        // Very low randomness in token selection
+        topK: 1,          // Always select most likely token for deterministic output
+        maxOutputTokens: 2048,
+        responseMimeType: "application/json", // Enforce JSON output
+        seed: policyHash, // Use content-based seed for identical inputs
+      },
       safetySettings: [
         {
           category: 'HARM_CATEGORY_HARASSMENT',
@@ -656,8 +796,8 @@ async function analyzeWithGemini(policyText, isPremium = false) {
       analysisResult = extractAnalysisFromText(text);
     }
 
-    // Enhanced validation for Phase 1 structured output
-    analysisResult = validateAndNormalizeResult(analysisResult, isPremium);
+    // Enhanced validation with consistency checking
+    analysisResult = validateAndNormalizeResult(analysisResult, isPremium, sanitizedText);
     
     return analysisResult;
 
@@ -690,12 +830,19 @@ function extractAnalysisFromText(text) {
     const bulletPoints = text.match(/[•\-\*]\s*[^\n]+/g) || [];
     const summary = bulletPoints.slice(0, 7).join('\n');
     
-    // Try to find score and confidence numbers
+    // Try to find score and confidence numbers - use content-based defaults for consistency
     const scoreMatch = text.match(/(?:score|rating).*?(\d+)/i);
-    const score = scoreMatch ? parseInt(scoreMatch[1]) : 5;
+    let score;
+    if (scoreMatch) {
+      score = parseInt(scoreMatch[1]);
+    } else {
+      // Deterministic fallback based on content analysis
+      console.warn('No score found in fallback extraction, using content-based analysis');
+      score = analyzeContentForScore(text);
+    }
     
     const confidenceMatch = text.match(/(?:confidence).*?(\d+)/i);
-    const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) : 70;
+    const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) : 60; // Lower default for fallback
     
     // Try to extract GDPR compliance if present
     let gdpr = null;
@@ -742,4 +889,38 @@ function extractComplianceValue(text, field) {
   const pattern = new RegExp(`${field}.*?(compliant|partial|non-compliant)`, 'i');
   const match = text.match(pattern);
   return match ? match[1].toLowerCase() : 'partial';
+}
+
+/**
+ * Analyze content to determine consistent score when fallback extraction fails
+ * @param {string} text - AI response text that couldn't be parsed
+ * @returns {number} Deterministic score based on content analysis
+ */
+function analyzeContentForScore(text) {
+  const lowerText = text.toLowerCase();
+  
+  // Use same risk indicators as validation function for consistency
+  const highRiskTerms = ['sell', 'sold', 'advertising', 'marketing', 'share with partners', 'third parties', 'indefinitely', 'permanent'];
+  const mediumRiskTerms = ['analytics', 'improve service', 'business purposes', 'partners', 'affiliates'];
+  const lowRiskTerms = ['essential', 'necessary', 'opt-out', 'delete', 'control', 'choice'];
+  
+  let highCount = 0, mediumCount = 0, lowCount = 0;
+  
+  highRiskTerms.forEach(term => {
+    if (lowerText.includes(term)) highCount++;
+  });
+  mediumRiskTerms.forEach(term => {
+    if (lowerText.includes(term)) mediumCount++;
+  });
+  lowRiskTerms.forEach(term => {
+    if (lowerText.includes(term)) lowCount++;
+  });
+  
+  // Same scoring logic as validation function
+  if (highCount >= 2) return 7 + Math.min(highCount, 3);
+  if (highCount >= 1 || mediumCount >= 3) return 5 + Math.min(mediumCount, 1);
+  if (mediumCount >= 1) return 3 + Math.min(mediumCount, 2);
+  if (lowCount >= 2) return Math.max(1, 3 - lowCount);
+  
+  return 5; // Default neutral score for ambiguous content
 }

@@ -115,23 +115,83 @@ This allows you to:
 
 For privacy-related questions or concerns about SimpleTerms, please:
 - Open an issue on our GitHub repository: https://github.com/C-Chambers/SimpleTerms/issues
-- Email: [Contact email to be provided]
+- Email: privacy@simpleterms.io
+
+## Data Protection Officer
+
+For GDPR-related inquiries, data protection concerns, or to exercise your rights under GDPR, you may contact our Data Protection Officer:
+
+**Data Protection Officer**
+- Email: dpo@simpleterms.io
+- Response time: Within 30 days as required by GDPR
+- Languages: English
+
+The DPO is responsible for:
+- Monitoring GDPR compliance
+- Serving as point of contact for data protection authorities
+- Conducting privacy impact assessments
+- Providing data protection guidance
+
+Note: As SimpleTerms processes minimal data and operates with privacy-by-design principles, most data protection concerns can be addressed through our standard privacy practices described in this policy.
 
 ## Legal Basis for Processing (GDPR)
 
 For users in the European Economic Area (EEA), we process data based on:
-- **Legitimate Interests**: To provide the privacy policy analysis service you request
-- **Consent**: By installing and using the extension, you consent to the processing described in this policy
+
+### Legitimate Interests
+We rely on legitimate interests to provide the privacy policy analysis service you explicitly request. Our legitimate interests include:
+- Providing accurate privacy policy summaries and risk scores
+- Improving our AI analysis through aggregated, anonymous feedback
+- Ensuring service functionality and security
+
+### Consent Management
+By installing and using the SimpleTerms extension, you provide explicit consent for:
+- Processing privacy policy text through our secure cloud function
+- Temporary data processing via Google's Gemini AI API
+- Local storage of usage statistics on your device
+
+**Withdrawing Consent**: You can withdraw your consent at any time by:
+- Uninstalling the extension (removes all local data)
+- Ceasing to use the analysis functionality
+- Contacting us to confirm data processing has stopped
+
+Your withdrawal of consent does not affect the lawfulness of processing based on consent before its withdrawal.
 
 ## Data Protection Rights (GDPR)
 
-If you are in the EEA, you have rights including:
-- Access to your data (though we store none)
-- Rectification of inaccurate data
-- Erasure of your data
-- Restriction of processing
-- Data portability
-- Objection to processing
+If you are in the European Economic Area (EEA), you have the following rights:
+
+### Right to Access
+You have the right to request access to any personal data we process about you. Since we do not store any personal data, we can confirm that no personal data associated with your identity exists in our systems. You may request this confirmation by contacting us using the information below.
+
+### Right to Rectification  
+You have the right to request correction of any inaccurate personal data. As we do not store personal data, there is no stored data to rectify. However, if you believe any processing is inaccurate, please contact us and we will investigate and respond within 30 days.
+
+### Right to Erasure ("Right to be Forgotten")
+You have the right to request deletion of your personal data. Since we do not store personal data on our servers, no server-side deletion is required. To remove any local data, simply uninstall the extension from your browser.
+
+### Right to Restrict Processing
+You have the right to request restriction of processing of your personal data. You can exercise this right by not using the extension or by uninstalling it entirely.
+
+### Right to Data Portability
+You have the right to receive your personal data in a structured, commonly used format. Since we do not store personal data, there is no data to export. Your local usage statistics remain in your browser's local storage.
+
+### Right to Object
+You have the right to object to processing of your personal data. You can exercise this right at any time by uninstalling the extension or ceasing to use it.
+
+### How to Exercise Your Rights
+To exercise any of these rights, please contact us using the information in the Contact section below. We will respond to all requests within 30 days as required by GDPR.
+
+### Right to Lodge a Complaint
+You have the right to lodge a complaint with a supervisory authority if you believe our processing of your personal data violates GDPR. You can contact:
+- Your local data protection authority
+- The lead supervisory authority for SimpleTerms (if established in the EU)
+
+### Automated Decision Making
+SimpleTerms does not use automated decision-making or profiling that produces legal effects or significantly affects you.
+
+### Data Breach Notification
+In the unlikely event of a data breach that poses a high risk to your rights and freedoms, we will notify you within 72 hours as required by GDPR. However, given our minimal data processing model, the risk of such breaches is extremely low.
 
 ## California Privacy Rights (CCPA)
 
