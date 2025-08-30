@@ -1125,6 +1125,29 @@ document.addEventListener('DOMContentLoaded', function() {
                         } else {
                             displayResultsInTab(analysisResult.score, analysisResult.summary, policy.url, tabIndex, policy.text);
                         }
+                        
+                        // Show dropdown after first tab analysis completes (for Pro users or testing)
+                        if (tabIndex === 0) {
+                            const isProUser = userSubscriptionInfo.paid;
+                            const isTestingMode = config.development && config.development.freeProFeatures;
+                            console.log('Multi-tab first analysis (dynamic content) dropdown check:', { 
+                                isProUser, 
+                                isTestingMode, 
+                                development: config.development,
+                                userInfo: userSubscriptionInfo 
+                            });
+                            if (isProUser || isTestingMode) {
+                                analysisTypeContainer.style.display = 'block';
+                                console.log('Multi-tab dropdown shown (dynamic content)');
+                                
+                                // Store data for re-analysis
+                                currentPolicyData = { text: dynamicContent, url: policy.url };
+                                lastAnalysisResult = analysisResult;
+                            } else {
+                                console.log('Multi-tab dropdown hidden (dynamic content)');
+                            }
+                        }
+                        
                         return;
                     } else {
                         throw new Error('Tab extraction also failed to get sufficient content');
