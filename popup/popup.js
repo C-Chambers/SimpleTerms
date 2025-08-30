@@ -40,6 +40,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentPolicyData = null; // Store current policy text/URL for re-analysis
     let lastAnalysisResult = null; // Store last analysis result
     
+    // Multi-tab analysis state
+    let tabPolicyData = []; // Store policy data for each tab separately
+    
     // Load configuration from config.js
     const config = window.SimpleTermsConfig || {
         features: { dailyAnalysisLimit: 5 },
@@ -142,8 +145,8 @@ document.addEventListener('DOMContentLoaded', function() {
     async function handleAnalysisTypeChange() {
         const newAnalysisType = analysisTypeSelect.value;
         
-        if (newAnalysisType === currentAnalysisType || !currentPolicyData) {
-            return; // No change or no data to re-analyze
+        if (newAnalysisType === currentAnalysisType) {
+            return; // No change
         }
         
         currentAnalysisType = newAnalysisType;
@@ -163,13 +166,124 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Re-analyze with new analysis type
-        try {
-            showLoading(`Switching to ${newAnalysisType === 'standard' ? 'Standard' : 'GDPR'} analysis...`);
-            await performAnalysisWithType(currentPolicyData, currentAnalysisType);
-        } catch (error) {
-            console.error('Error re-analyzing with new type:', error);
-            showError('Failed to switch analysis type. Please try again.');
+        // Check if we have multi-tab data (tabs are visible)
+        const isMultiTab = tabsContainer.style.display !== 'none' && tabPolicyData.length > 0;
+        
+        if (isMultiTab) {
+            // Multi-tab scenario: re-analyze ALL tabs with the new analysis type
+            try {
+                // Show loading in all tabs
+                for (let i = 0; i < tabPolicyData.length; i++) {
+                    if (tabPolicyData[i]) {
+                        showLoadingInTab(i, `Switching to ${newAnalysisType === 'standard' ? 'Standard' : 'GDPR'} analysis...`);
+                    }
+                }
+                
+                // Re-analyze all tabs in parallel
+                const reanalysisPromises = [];
+                for (let i = 0; i < tabPolicyData.length; i++) {
+                    if (tabPolicyData[i]) {
+                        reanalysisPromises.push(reanalyzeTabWithType(i, tabPolicyData[i], currentAnalysisType));
+                    }
+                }
+                
+                await Promise.all(reanalysisPromises);
+            } catch (error) {
+                console.error('Error re-analyzing tabs with new type:', error);
+                // Show error in currently active tab
+                displayErrorInTab('Failed to switch analysis type. Please try again.', currentTabIndex);
+            }
+        } else {
+            // Single policy scenario: use existing logic
+            if (!currentPolicyData) {
+                return; // No data to re-analyze
+            }
+            
+            try {
+                showLoading(`Switching to ${newAnalysisType === 'standard' ? 'Standard' : 'GDPR'} analysis...`);
+                await performAnalysisWithType(currentPolicyData, currentAnalysisType);
+            } catch (error) {
+                console.error('Error re-analyzing with new type:', error);
+                showError('Failed to switch analysis type. Please try again.');
+            }
+        }
+    }
+    
+    /**
+     * Show loading message in specific tab
+     */
+    function showLoadingInTab(tabIndex, message = 'Analyzing...') {
+        const tabContent = document.getElementById(`tab-content-${tabIndex}`);
+        if (tabContent) {
+            tabContent.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div style="margin-top: 10px; color: #6c757d; font-size: 14px;">
+                        ${message}
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    /**
+     * Re-analyze a specific tab with the given analysis type
+     */
+    async function reanalyzeTabWithType(tabIndex, policyData, analysisType) {
+        const policyText = policyData.text;
+        const policyUrl = policyData.url;
+        const policyTitle = policyData.title;
+        
+        if (analysisType === 'standard') {
+            // Standard analysis
+            const analysisResult = await analyzeWithCloudFunction(policyText);
+            displayResultsInTab(analysisResult.score, analysisResult.summary, policyUrl, tabIndex, policyTitle, null);
+        } else if (analysisType === 'gdpr') {
+            // GDPR analysis (already security-checked in handleAnalysisTypeChange)
+            const analysisResult = await analyzeWithCloudFunction(policyText);
+            const gdprCompliance = generateGDPRCompliance(policyText, analysisResult.score);
+            displayGDPRResultsInTab(analysisResult.score, analysisResult.summary, policyUrl, tabIndex, policyTitle, gdprCompliance);
+        }
+    }
+    
+    /**
+     * Display GDPR analysis results in a specific tab
+     */
+    function displayGDPRResultsInTab(score, summary, policyUrl, tabIndex, policyText, gdprCompliance) {
+        const tabContent = document.getElementById(`tab-content-${tabIndex}`);
+        if (!tabContent) return;
+        
+        if (gdprCompliance) {
+            const detailsHTML = Object.entries(gdprCompliance.checks)
+                .map(([check, status]) => `
+                    <li>
+                        <span class="compliance-item">${check}</span>
+                        <span class="compliance-status ${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                    </li>
+                `).join('');
+
+            tabContent.innerHTML = `
+                <div class="gdpr-compliance">
+                    <div class="gdpr-title">
+                        🛡️ ${escapeHtml(policyText || 'GDPR Analysis')}
+                    </div>
+                    <div class="gdpr-score ${gdprCompliance.scoreClass}">
+                        ${gdprCompliance.score}% ${gdprCompliance.overallRating}
+                    </div>
+                    <ul class="gdpr-details">
+                        ${detailsHTML}
+                    </ul>
+                    <div style="font-size: 11px; color: #666; margin-top: 8px; text-align: center;">
+                        ${gdprCompliance.summary}
+                    </div>
+                </div>
+                <div style="margin-top: 10px; font-size: 12px; color: #6c757d; text-align: center;">
+                    Analyzed: <a href="${escapeHtml(policyUrl)}" target="_blank" rel="noopener noreferrer" style="color: #667eea;" title="${escapeHtml(policyUrl)}">${escapeHtml(formatUrlForDisplay(policyUrl))}</a>
+                </div>
+            `;
+        } else {
+            // Show locked GDPR for non-pro users
+            tabContent.innerHTML = generateGDPRHTML(null);
         }
     }
     
@@ -807,6 +921,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentAnalysisType = 'standard';
             analysisTypeSelect.value = 'standard';
             analysisTypeContainer.style.display = 'none';
+            tabPolicyData = []; // Reset tab policy data
 
             // Increment usage count for free users
             await incrementUsageCount();
@@ -894,6 +1009,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentTabIndex = 0;
             tabButtons.innerHTML = '';
             resultsContainer.innerHTML = '';
+            tabPolicyData = []; // Reset tab policy data
             
             // Show tabs if more than one policy
             if (policies.length > 1) {
@@ -995,6 +1111,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log(`Tab ${tabIndex} - Tab extraction successful:`, dynamicContent.length, 'characters');
                         const analysisResult = await analyzeWithCloudFunction(dynamicContent);
                         
+                        // Store policy data for re-analysis
+                        tabPolicyData[tabIndex] = {
+                            text: dynamicContent,
+                            url: policy.url,
+                            title: policy.text
+                        };
+                        
                         // Add GDPR compliance for Pro users only
                         if (userSubscriptionInfo.paid) {
                             analysisResult.gdprCompliance = generateGDPRCompliance(dynamicContent, analysisResult.score);
@@ -1012,6 +1135,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
+            // Store policy data for re-analysis
+            tabPolicyData[tabIndex] = {
+                text: policyText,
+                url: policy.url,
+                title: policy.text
+            };
+            
             // Analyze with AI
             const analysisResult = await analyzeWithGDPR(policyText);
             
@@ -1541,6 +1671,6 @@ document.addEventListener('DOMContentLoaded', function() {
         currentTabIndex = 0;
         tabsContainer.style.display = 'none';
         tabButtons.innerHTML = '';
-        // Note: We don't reset unified analysis state here since we want to keep the dropdown visible after analysis
+        // Note: We don't reset unified analysis state or tabPolicyData here since we want to keep the dropdown and re-analysis functionality after analysis
     }
 });
