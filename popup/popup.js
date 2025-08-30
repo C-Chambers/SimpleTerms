@@ -241,7 +241,8 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (analysisType === 'gdpr') {
             // GDPR analysis (already security-checked in handleAnalysisTypeChange)
             const analysisResult = await analyzeWithCloudFunction(policyText);
-            const gdprCompliance = generateGDPRCompliance(policyText, analysisResult.score);
+            // Use backend AI GDPR results if available, otherwise fallback to local analysis
+            const gdprCompliance = analysisResult.gdprCompliance || generateGDPRCompliance(policyText, analysisResult.score);
             displayGDPRResultsInTab(analysisResult.score, analysisResult.summary, policyUrl, tabIndex, policyTitle, gdprCompliance);
         }
     }
@@ -328,7 +329,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // GDPR analysis
             if (userSubscriptionInfo.paid) {
                 const analysisResult = await analyzeWithCloudFunction(policyText);
-                const gdprCompliance = generateGDPRCompliance(policyText, analysisResult.score);
+                // Use backend AI GDPR results if available, otherwise fallback to local analysis
+                const gdprCompliance = analysisResult.gdprCompliance || generateGDPRCompliance(policyText, analysisResult.score);
                 
                 if (isCurrentPage && policyData.confidence) {
                     displayCurrentPageUnifiedResults(analysisResult.score, analysisResult.summary, policyUrl, policyData.confidence, analysisType);
@@ -654,7 +656,8 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (analysisType === 'gdpr') {
             // GDPR analysis for current page
             if (userSubscriptionInfo.paid) {
-                const gdprCompliance = generateGDPRCompliance(currentPolicyData.content, score);
+                // Use backend AI GDPR results if available, otherwise fallback to local analysis
+                const gdprCompliance = lastAnalysisResult?.gdprCompliance || generateGDPRCompliance(currentPolicyData.content, score);
                 if (gdprCompliance) {
                     const detailsHTML = Object.entries(gdprCompliance.checks)
                         .map(([check, status]) => `
@@ -820,7 +823,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const isDevelopmentMode = config.development && config.development.freeProFeatures === true;
         
         if (isReallyPro || isDevelopmentMode) {
-            analysisResult.gdprCompliance = generateGDPRCompliance(policyText, analysisResult.score);
+            // FIXED: Use backend AI GDPR results instead of frontend analysis
+            if (analysisResult.gdprCompliance) {
+                console.log('Using backend AI GDPR results:', analysisResult.gdprCompliance);
+                // Backend already provided GDPR analysis - use it directly
+            } else {
+                console.log('No backend GDPR results, falling back to frontend analysis');
+                // Fallback to frontend analysis if backend didn't provide GDPR results
+                analysisResult.gdprCompliance = generateGDPRCompliance(policyText, analysisResult.score);
+            }
         } else {
             console.warn('SECURITY: Unauthorized attempt to access GDPR analysis via analyzeWithGDPR');
             analysisResult.gdprCompliance = null; // Show locked section for free users
@@ -1150,7 +1161,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // Add GDPR compliance for Pro users only
                         if (userSubscriptionInfo.paid) {
-                            analysisResult.gdprCompliance = generateGDPRCompliance(dynamicContent, analysisResult.score);
+                            // Use backend AI GDPR results if available, otherwise fallback to local analysis
+                            if (!analysisResult.gdprCompliance) {
+                                analysisResult.gdprCompliance = generateGDPRCompliance(dynamicContent, analysisResult.score);
+                            }
                             displayResultsInTab(analysisResult.score, analysisResult.summary, policy.url, tabIndex, policy.text, analysisResult.gdprCompliance);
                         } else {
                             displayResultsInTab(analysisResult.score, analysisResult.summary, policy.url, tabIndex, policy.text);
