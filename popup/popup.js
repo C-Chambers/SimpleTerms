@@ -253,14 +253,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const tabContent = document.getElementById(`tab-content-${tabIndex}`);
         if (!tabContent) return;
         
+        // SECURITY: Validate inputs to prevent XSS
+        if (typeof tabIndex !== 'number' || tabIndex < 0) {
+            console.warn('SECURITY: Invalid tabIndex in displayGDPRResultsInTab');
+            return;
+        }
+        
         if (gdprCompliance) {
             const detailsHTML = Object.entries(gdprCompliance.checks)
-                .map(([check, status]) => `
-                    <li>
-                        <span class="compliance-item">${check}</span>
-                        <span class="compliance-status ${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
-                    </li>
-                `).join('');
+                .map(([check, status]) => {
+                    // SECURITY: Additional escaping for dynamic content
+                    const safeCheck = escapeHtml(check);
+                    const safeStatus = escapeHtml(status);
+                    return `
+                        <li>
+                            <span class="compliance-item">${safeCheck}</span>
+                            <span class="compliance-status ${safeStatus.toLowerCase()}">${safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1)}</span>
+                        </li>
+                    `;
+                }).join('');
 
             tabContent.innerHTML = `
                 <div class="gdpr-compliance">
@@ -694,18 +705,37 @@ document.addEventListener('DOMContentLoaded', function() {
      * @returns {Object} GDPR compliance analysis
      */
     function generateGDPRCompliance(policyText, privacyScore) {
-        // SECURITY: Detect if function is being called directly from console
+        // SECURITY: Enhanced protection against console manipulation
         const stack = new Error().stack;
-        const isDirectCall = !stack.includes('handleAnalysisTypeChange') && 
-                           !stack.includes('analyzeWithGDPR') && 
-                           !stack.includes('performAnalysisWithType');
+        const allowedCallers = [
+            'handleAnalysisTypeChange',
+            'analyzeWithGDPR', 
+            'performAnalysisWithType',
+            'reanalyzeTabWithType',
+            'analyzePolicyForTab'
+        ];
         
-        if (isDirectCall) {
-            console.warn('SECURITY: Direct call to generateGDPRCompliance detected - potential bypass attempt');
+        const isAuthorizedCall = allowedCallers.some(caller => stack.includes(caller));
+        
+        if (!isAuthorizedCall) {
+            console.warn('SECURITY: Unauthorized call to generateGDPRCompliance detected - potential console bypass attempt');
+            console.warn('SECURITY: Call stack:', stack);
+            return null;
         }
-        // SECURITY: Enhanced validation to prevent bypass attempts
+        
+        // SECURITY: Multi-layer validation to prevent bypass attempts  
         const isReallyPro = userSubscriptionInfo && userSubscriptionInfo.paid === true;
         const isDevelopmentMode = config.development && config.development.freeProFeatures === true;
+        
+        // Additional security: Check if config was tampered with (only in extension context, not for development)
+        if (config.development && config.development.freeProFeatures && 
+            window.chrome && window.chrome.runtime && 
+            !window.location.hostname.includes('localhost') && 
+            !window.location.hostname.includes('127.0.0.1') &&
+            !chrome.runtime.getURL('').includes('chrome-extension://')) {
+            console.warn('SECURITY: Development mode detected in non-development environment - potential tampering');
+            // Allow it anyway for legitimate development/testing
+        }
         
         if (!isReallyPro && !isDevelopmentMode) {
             console.warn('SECURITY: Unauthorized attempt to access GDPR analysis');
@@ -1578,14 +1608,29 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     async function analyzeWithCloudFunction(policyText) {
         return new Promise((resolve, reject) => {
+            // SECURITY: Include subscription validation data for server-side verification
             chrome.runtime.sendMessage({
                 type: 'ANALYZE_WITH_CLOUD_FUNCTION',
                 policyText: policyText,
-                includePremiumFeatures: userSubscriptionInfo.paid
+                includePremiumFeatures: userSubscriptionInfo.paid,
+                // SECURITY: Send subscription info for server-side validation
+                subscriptionValidation: {
+                    isPaid: userSubscriptionInfo.paid,
+                    plan: userSubscriptionInfo.plan,
+                    subscriptionStatus: userSubscriptionInfo.subscriptionStatus,
+                    timestamp: Date.now()
+                }
             }, (response) => {
                 if (chrome.runtime.lastError) {
                     reject(new Error(chrome.runtime.lastError.message));
                 } else if (response.success) {
+                    // SECURITY: Validate server response doesn't contain premium data for free users
+                    // BUT respect development mode configuration
+                    const isDevelopmentMode = config.development && config.development.freeProFeatures === true;
+                    if (!userSubscriptionInfo.paid && !isDevelopmentMode && response.result.gdprCompliance) {
+                        console.warn('SECURITY: Server returned premium data for free user - potential tampering');
+                        delete response.result.gdprCompliance;
+                    }
                     resolve(response.result);
                 } else {
                     reject(new Error(response.error || 'Failed to analyze with Cloud Function'));
