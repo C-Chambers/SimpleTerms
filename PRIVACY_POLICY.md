@@ -161,16 +161,23 @@ Your withdrawal of consent does not affect the lawfulness of processing based on
 
 If you are in the European Economic Area (EEA), you have the following rights:
 
-### Right to Access
-You have the explicit right to request access to any personal data we process about you. To exercise this right:
+### Right to Access (Article 15 GDPR)
+Under GDPR Article 15, you have the explicit and unrestricted right to obtain access to any personal data we process about you. This includes the right to obtain confirmation as to whether personal data concerning you is being processed.
 
-**Access Request Process:**
-1. Contact us via email at privacy@simpleterms.io or dpo@simpleterms.io
-2. Include your request details and any relevant information
-3. We will respond within 30 days as required by GDPR
-4. We will provide confirmation that no personal data associated with your identity exists in our systems
+**How to Exercise Your Right to Access:**
+1. **Submit a Request**: Contact us via email at privacy@simpleterms.io or dpo@simpleterms.io
+2. **Request Details**: Include your access request details and any relevant identifying information
+3. **Response Timeframe**: We will respond within 30 days as mandated by GDPR Article 12
+4. **Access Confirmation**: We will provide written confirmation regarding any personal data processing
+5. **Free Access**: This service is provided free of charge for the first request per year
 
-Since SimpleTerms does not store any personal data on our servers, we can immediately confirm that no personal data associated with your identity exists in our systems. This confirmation will be provided free of charge and within the required timeframe.
+**What We Will Provide:**
+- Written confirmation that no personal data associated with your identity is stored in our systems
+- Details of any data processing activities (currently none for personal data)
+- Information about data sources, processing purposes, and retention periods (if applicable)
+- Your rights regarding this data
+
+Since SimpleTerms operates on a privacy-by-design principle and does not store any personal data on our servers, we can immediately provide written confirmation that no personal data concerning you exists in our systems. This access confirmation will be delivered electronically within the GDPR-required timeframe at no cost to you.
 
 ### Right to Rectification  
 You have the right to request correction of any inaccurate personal data. As we do not store personal data, there is no stored data to rectify. However, if you believe any processing is inaccurate, please contact us and we will investigate and respond within 30 days.

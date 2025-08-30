@@ -454,11 +454,14 @@ SCORE 9-10 (Extreme Risk):
 
 GDPR COMPLIANCE CRITERIA (Premium Feature):${isPremium ? `
 
-ACCESS RIGHTS - "compliant":
-- Explicit statement of right to access personal data
-- Clear process for making access requests (contact method)
-- Specified response timeframe (within 30 days)
-- Confirmation available when no data is stored
+ACCESS RIGHTS - Mark as "compliant" if policy contains:
+✓ "Article 15" AND ("right to access" OR "obtain access")
+✓ "30 days" OR "within 30" (response timeframe)
+✓ "written confirmation" OR "provide confirmation"
+✓ "free of charge" OR "no cost" OR "at no cost"
+✓ Contact method (email address or contact form)
+
+CRITICAL: If policy has "Article 15 GDPR" + "right to obtain access" + "30 days" + "written confirmation" + "free of charge" + email contact = MUST be "compliant"
 
 RECTIFICATION - "compliant": 
 - Right to correct inaccurate data explicitly stated
